@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/crud/">
+    <Project Path="crud/TaskTracker.Api/TaskTracker.Api.csproj" />
+    <Project Path="crud/TaskTracker.Application/TaskTracker.Application.csproj" />
+    <Project Path="crud/TaskTracker.Domain/TaskTracker.Domain.csproj" />
+    <Project Path="crud/TaskTracker.Infrastructure/TaskTracker.Infrastructure.csproj" />
+  </Folder>
+</Solution>
