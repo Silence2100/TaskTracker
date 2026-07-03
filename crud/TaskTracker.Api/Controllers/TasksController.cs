@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
+using TaskTracker.Domain.Enums;
 
 namespace TaskTracker.Api.Controllers;
 
@@ -9,6 +10,7 @@ namespace TaskTracker.Api.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly ITaskService _taskService;
+
     public TasksController(ITaskService taskService)
     {
         _taskService = taskService;
@@ -28,9 +30,7 @@ public class TasksController : ControllerBase
         var task = await _taskService.GetByIdAsync(id);
 
         if (task is null)
-        {
             return NotFound();
-        }
 
         return Ok(task);
     }
@@ -38,16 +38,23 @@ public class TasksController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TaskDto>> Create(CreateTaskDto dto)
     {
+        if (dto.ProjectId == Guid.Empty)
+            return BadRequest("ProjectId is required.");
+
+        if (dto.AuthorId == Guid.Empty)
+            return BadRequest("AuthorId is required.");
+
+        if (dto.AssignedUserId == Guid.Empty)
+            return BadRequest("AssignedUserId is invalid.");
+
         if (string.IsNullOrWhiteSpace(dto.Title))
-        {
             return BadRequest("Title is required.");
-        }
 
         var createdTask = await _taskService.CreateAsync(dto);
 
         return CreatedAtAction(
-            nameof(GetById), 
-            new { id = createdTask.Id }, 
+            nameof(GetById),
+            new { id = createdTask.Id },
             createdTask);
     }
 
@@ -55,16 +62,18 @@ public class TasksController : ControllerBase
     public async Task<IActionResult> Update(Guid id, UpdateTaskDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Title))
-        {
             return BadRequest("Title is required.");
-        }
+
+        if (!Enum.IsDefined(typeof(TaskItemStatus), dto.Status))
+            return BadRequest("Invalid task status.");
+
+        if (dto.AssignedUserId == Guid.Empty)
+            return BadRequest("AssignedUserId is invalid.");
 
         var isUpdated = await _taskService.UpdateAsync(id, dto);
 
         if (isUpdated == false)
-        {
             return NotFound();
-        }
 
         return NoContent();
     }
@@ -75,9 +84,7 @@ public class TasksController : ControllerBase
         var isDeleted = await _taskService.DeleteAsync(id);
 
         if (isDeleted == false)
-        {
             return NotFound();
-        }
 
         return NoContent();
     }
