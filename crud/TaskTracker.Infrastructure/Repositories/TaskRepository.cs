@@ -18,6 +18,9 @@ public class TaskRepository : ITaskRepository
     {
         return await _context.Tasks
             .AsNoTracking()
+            .Include(task => task.Project)
+            .Include(task => task.Author)
+            .Include(task => task.AssignedUser)
             .OrderByDescending(task => task.CreatedAt)
             .ToListAsync();
     }
@@ -25,6 +28,9 @@ public class TaskRepository : ITaskRepository
     public async Task<TaskItem?> GetByIdAsync(Guid id)
     {
         return await _context.Tasks
+            .Include(task => task.Project)
+            .Include(task => task.Author)
+            .Include(task => task.AssignedUser)
             .FirstOrDefaultAsync(task => task.Id == id);
     }
 
@@ -33,12 +39,11 @@ public class TaskRepository : ITaskRepository
         await _context.Tasks.AddAsync(task);
         await _context.SaveChangesAsync();
 
-        return task;
+        return await GetByIdAsync(task.Id) ?? task;
     }
 
     public async Task UpdateAsync(TaskItem task)
     {
-        _context.Tasks.Update(task);
         await _context.SaveChangesAsync();
     }
 
