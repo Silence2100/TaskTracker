@@ -1,6 +1,7 @@
 ﻿using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Entities;
+using TaskTracker.Domain.Enums;
 
 namespace TaskTracker.Application.Services;
 
@@ -25,7 +26,7 @@ public class TaskService : ITaskService
     public async Task<TaskDto?> GetByIdAsync(Guid id)
     {
         var task = await _taskRepository.GetByIdAsync(id);
-        
+
         if (task is null)
             return null;
 
@@ -37,11 +38,15 @@ public class TaskService : ITaskService
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
+            ProjectId = dto.ProjectId,
             Title = dto.Title.Trim(),
             Description = string.IsNullOrWhiteSpace(dto.Description)
                 ? null
                 : dto.Description.Trim(),
-            IsCompleted = false,
+            Deadline = NormalizeDateTime(dto.Deadline),
+            Status = TaskItemStatus.Todo,
+            AssignedUserId = dto.AssignedUserId,
+            AuthorId = dto.AuthorId,
             CreatedAt = DateTime.UtcNow,
             UpdateAt = null
         };
@@ -62,7 +67,9 @@ public class TaskService : ITaskService
         task.Description = string.IsNullOrWhiteSpace(dto.Description)
             ? null
             : dto.Description.Trim();
-        task.IsCompleted = dto.IsCompleted;
+        task.Deadline = NormalizeDateTime(dto.Deadline);
+        task.Status = dto.Status;
+        task.AssignedUserId = dto.AssignedUserId;
         task.UpdateAt = DateTime.UtcNow;
 
         await _taskRepository.UpdateAsync(task);
@@ -87,11 +94,29 @@ public class TaskService : ITaskService
         return new TaskDto
         {
             Id = task.Id,
+            ProjectId = task.ProjectId,
+            ProjectName = task.Project?.Name,
             Title = task.Title,
             Description = task.Description,
-            IsCompleted = task.IsCompleted,
+            Deadline = task.Deadline,
+            Status = task.Status,
+            AssignedUserId = task.AssignedUserId,
+            AssignedUserName = task.AssignedUser?.Name,
+            AuthorId = task.AuthorId,
+            AuthorName = task.Author?.Name,
             CreatedAt = task.CreatedAt,
             UpdateAt = task.UpdateAt
         };
+    }
+
+    private static DateTime? NormalizeDateTime(DateTime? dateTime)
+    {
+        if (dateTime is null)
+            return null;
+
+        if (dateTime.Value.Kind == DateTimeKind.Unspecified)
+            return DateTime.SpecifyKind(dateTime.Value, DateTimeKind.Utc);
+
+        return dateTime.Value.ToUniversalTime();
     }
 }
