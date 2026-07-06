@@ -1,4 +1,5 @@
-﻿using TaskTracker.Application.DTOs.Tasks;
+﻿using AutoMapper;
+using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Domain.Enums;
@@ -8,19 +9,19 @@ namespace TaskTracker.Application.Services;
 public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
+    private readonly IMapper _mapper;
 
-    public TaskService(ITaskRepository taskRepository)
+    public TaskService(ITaskRepository taskRepository, IMapper mapper)
     {
         _taskRepository = taskRepository;
+        _mapper = mapper;
     }
 
     public async Task<List<TaskDto>> GetAllAsync()
     {
         var tasks = await _taskRepository.GetAllAsync();
 
-        return tasks
-            .Select(MapToDto)
-            .ToList();
+        return _mapper.Map<List<TaskDto>>(tasks);
     }
 
     public async Task<TaskDto?> GetByIdAsync(Guid id)
@@ -30,7 +31,7 @@ public class TaskService : ITaskService
         if (task is null)
             return null;
 
-        return MapToDto(task);
+        return _mapper.Map<TaskDto>(task);
     }
 
     public async Task<TaskDto> CreateAsync(CreateTaskDto dto)
@@ -53,7 +54,7 @@ public class TaskService : ITaskService
 
         var createdTask = await _taskRepository.CreateAsync(task);
 
-        return MapToDto(createdTask);
+        return _mapper.Map<TaskDto>(createdTask);
     }
 
     public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto)
@@ -87,26 +88,6 @@ public class TaskService : ITaskService
         await _taskRepository.DeleteAsync(task);
 
         return true;
-    }
-
-    private static TaskDto MapToDto(TaskItem task)
-    {
-        return new TaskDto
-        {
-            Id = task.Id,
-            ProjectId = task.ProjectId,
-            ProjectName = task.Project?.Name,
-            Title = task.Title,
-            Description = task.Description,
-            Deadline = task.Deadline,
-            Status = task.Status,
-            AssignedUserId = task.AssignedUserId,
-            AssignedUserName = task.AssignedUser?.Name,
-            AuthorId = task.AuthorId,
-            AuthorName = task.Author?.Name,
-            CreatedAt = task.CreatedAt,
-            UpdateAt = task.UpdateAt
-        };
     }
 
     private static DateTime? NormalizeDateTime(DateTime? dateTime)

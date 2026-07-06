@@ -1,4 +1,5 @@
-﻿using TaskTracker.Application.DTOs.Projects;
+﻿using AutoMapper;
+using TaskTracker.Application.DTOs.Projects;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Domain.Enums;
@@ -9,20 +10,23 @@ public class ProjectService : IProjectService
 {
     private readonly IProjectRepository _projectRepository;
     private readonly IUserRepository _userRepository;
+    private readonly IMapper _mapper;
 
-    public ProjectService(IProjectRepository projectRepository, IUserRepository userRepository)
+    public ProjectService(
+        IProjectRepository projectRepository,
+        IUserRepository userRepository,
+        IMapper mapper)
     {
         _projectRepository = projectRepository;
         _userRepository = userRepository;
+        _mapper = mapper;
     }
 
     public async Task<List<ProjectDto>> GetAllAsync()
     {
         var projects = await _projectRepository.GetAllAsync();
 
-        return projects
-            .Select(MapToDto)
-            .ToList();
+        return _mapper.Map<List<ProjectDto>>(projects);
     }
 
     public async Task<ProjectDto?> GetByIdAsync(Guid id)
@@ -32,7 +36,7 @@ public class ProjectService : IProjectService
         if (project is null)
             return null;
 
-        return MapToDto(project);
+        return _mapper.Map<ProjectDto>(project);
     }
 
     public async Task<ProjectDto?> CreateAsync(CreateProjectDto dto)
@@ -58,7 +62,7 @@ public class ProjectService : IProjectService
 
         var createdProject = await _projectRepository.CreateAsync(project);
 
-        return MapToDto(createdProject);
+        return _mapper.Map<ProjectDto>(createdProject);
     }
 
     public async Task<List<ProjectMemberDto>?> GetMembersAsync(Guid projectId)
@@ -70,25 +74,6 @@ public class ProjectService : IProjectService
 
         var members = await _projectRepository.GetMembersAsync(projectId);
 
-        return members
-            .Select(member => new ProjectMemberDto
-            {
-                UserId = member.UserId,
-                UserName = member.User.Name,
-                UserEmail = member.User.Email,
-                Role = member.Role
-            })
-            .ToList();
-    }
-
-    private static ProjectDto MapToDto(Project project)
-    {
-        return new ProjectDto
-        {
-            Id = project.Id,
-            Name = project.Name,
-            TasksCount = project.Tasks.Count,
-            MembersCount = project.Members.Count
-        };
+        return _mapper.Map<List<ProjectMemberDto>>(members);
     }
 }
