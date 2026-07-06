@@ -1,4 +1,5 @@
 ﻿using TaskTracker.Application.DTOs.Tasks;
+
 namespace TaskTracker.Application.Interfaces;
 
 public interface ITaskService
