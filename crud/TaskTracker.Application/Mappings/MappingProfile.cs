@@ -10,7 +10,10 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        CreateMap<User, UserDto>();
+        CreateMap<User, UserDto>()
+            .ForMember(
+                dest => dest.Email,
+                opt => opt.MapFrom(src => src.Email.Value));
 
         CreateMap<Project, ProjectDto>()
             .ForMember(
@@ -26,7 +29,7 @@ public class MappingProfile : Profile
                 opt => opt.MapFrom(src => src.User.Name))
             .ForMember(
                 dest => dest.UserEmail,
-                opt => opt.MapFrom(src => src.User.Email));
+                opt => opt.MapFrom(src => src.User.Email.Value));
 
         CreateMap<TaskItem, TaskDto>()
             .ForMember(

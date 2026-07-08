@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Entities;
+using TaskTracker.Domain.ValueObjects;
 using TaskTracker.Infrastructure.Data;
 
 namespace TaskTracker.Infrastructure.Repositories;
@@ -36,7 +37,7 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(user => user.Login == login);
     }
 
-    public async Task<User?> GetByEmailAsync(string email)
+    public async Task<User?> GetByEmailAsync(Email email)
     {
         return await _context.Users
             .AsNoTracking()

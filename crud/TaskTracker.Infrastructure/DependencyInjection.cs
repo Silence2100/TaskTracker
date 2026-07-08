@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Infrastructure.Data;
 using TaskTracker.Infrastructure.Repositories;
+using TaskTracker.Infrastructure.Security;
 
 namespace TaskTracker.Infrastructure;
 
@@ -22,6 +23,7 @@ public static class DependencyInjection
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
+        services.AddScoped<IPasswordHasher, UserPasswordHasher>();
 
         return services;
     }

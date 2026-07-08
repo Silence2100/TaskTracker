@@ -2,17 +2,20 @@
 using TaskTracker.Application.DTOs.Users;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Entities;
+using TaskTracker.Domain.ValueObjects;
 
 namespace TaskTracker.Application.Services;
 
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly IMapper _mapper;
 
-    public UserService(IUserRepository userRepository, IMapper mapper)
+    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher, IMapper mapper)
     {
         _userRepository = userRepository;
+        _passwordHasher = passwordHasher;
         _mapper = mapper;
     }
 
@@ -35,28 +38,24 @@ public class UserService : IUserService
 
     public async Task<UserDto?> CreateAsync(CreateUserDto dto)
     {
-        var login = dto.Login.Trim();
-        var email = dto.Email.Trim().ToLower();
-        var name = dto.Name.Trim();
+        var email = Email.Create(dto.Email);
+        var passwordHash = _passwordHasher.Hash(dto.Password);
 
-        var userWithSameLogin = await _userRepository.GetByLoginAsync(login);
+        var user = User.Register(
+            dto.Login,
+            email,
+            passwordHash,
+            dto.Name);
+
+        var userWithSameLogin = await _userRepository.GetByLoginAsync(user.Login);
 
         if (userWithSameLogin is not null)
             return null;
 
-        var userWithSameEmail = await _userRepository.GetByEmailAsync(email);
+        var userWithSameEmail = await _userRepository.GetByEmailAsync(user.Email);
 
         if (userWithSameEmail is not null)
             return null;
-
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Login = login,
-            Email = email,
-            Password = dto.Password,
-            Name = name
-        };
 
         var createdUser = await _userRepository.CreateAsync(user);
 

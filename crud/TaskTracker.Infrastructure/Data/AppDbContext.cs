@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TaskTracker.Domain.Entities;
-using TaskTracker.Domain.Enums;
+using TaskTracker.Domain.ValueObjects;
 
 namespace TaskTracker.Infrastructure.Data;
 
@@ -41,11 +41,14 @@ public class AppDbContext : DbContext
 
             entity.Property(user => user.Email)
                 .HasColumnName("email")
+                .HasConversion(
+                    email => email.Value,
+                    value => Email.Create(value))
                 .HasMaxLength(255)
                 .IsRequired();
 
-            entity.Property(user => user.Password)
-                .HasColumnName("password")
+            entity.Property(user => user.PasswordHash)
+                .HasColumnName("password_hash")
                 .HasMaxLength(500)
                 .IsRequired();
 
