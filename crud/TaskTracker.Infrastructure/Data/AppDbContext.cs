@@ -36,7 +36,10 @@ public class AppDbContext : DbContext
 
             entity.Property(user => user.Login)
                 .HasColumnName("login")
-                .HasMaxLength(100)
+                .HasConversion(
+                    login => login.Value,
+                    value => Login.Create(value))
+                .HasMaxLength(Login.MaxLength)
                 .IsRequired();
 
             entity.Property(user => user.Email)
@@ -58,10 +61,12 @@ public class AppDbContext : DbContext
                 .IsRequired();
 
             entity.HasIndex(user => user.Login)
-                .IsUnique();
+                .IsUnique()
+                .HasDatabaseName("ux_users_login");
 
             entity.HasIndex(user => user.Email)
-                .IsUnique();
+                .IsUnique()
+                .HasDatabaseName("ux_users_email");
         });
     }
 

@@ -12,34 +12,37 @@ public class MappingProfile : Profile
     {
         CreateMap<User, UserDto>()
             .ForMember(
-                dest => dest.Email,
-                opt => opt.MapFrom(src => src.Email.Value));
+                destination => destination.Login,
+                options => options.MapFrom(source => source.Login.Value))
+            .ForMember(
+                destination => destination.Email,
+                options => options.MapFrom(source => source.Email.Value));
 
         CreateMap<Project, ProjectDto>()
             .ForMember(
-                dest => dest.TasksCount,
-                opt => opt.MapFrom(src => src.Tasks.Count))
+                destination => destination.TasksCount,
+                options => options.MapFrom(source => source.Tasks.Count))
             .ForMember(
-                dest => dest.MembersCount,
-                opt => opt.MapFrom(src => src.Members.Count));
+                destination => destination.MembersCount,
+                options => options.MapFrom(source => source.Members.Count));
 
         CreateMap<ProjectMember, ProjectMemberDto>()
             .ForMember(
-                dest => dest.UserName,
-                opt => opt.MapFrom(src => src.User.Name))
+                destination => destination.UserName,
+                options => options.MapFrom(source => source.User.Name))
             .ForMember(
-                dest => dest.UserEmail,
-                opt => opt.MapFrom(src => src.User.Email.Value));
+                destination => destination.UserEmail,
+                options => options.MapFrom(source => source.User.Email.Value));
 
         CreateMap<TaskItem, TaskDto>()
             .ForMember(
-                dest => dest.ProjectName,
-                opt => opt.MapFrom(src => src.Project.Name))
+                destination => destination.ProjectName,
+                options => options.MapFrom(source => source.Project.Name))
             .ForMember(
-                dest => dest.AssignedUserName,
-                opt => opt.MapFrom(src => src.AssignedUser == null ? null : src.AssignedUser.Name))
+                destination => destination.AssignedUserName,
+                options => options.MapFrom(source => source.AssignedUser == null ? null : source.AssignedUser.Name))
             .ForMember(
-                dest => dest.AuthorName,
-                opt => opt.MapFrom(src => src.Author.Name));
+                destination => destination.AuthorName,
+                options => options.MapFrom(source => source.Author.Name));
     }
 }

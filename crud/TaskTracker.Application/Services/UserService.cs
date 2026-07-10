@@ -36,29 +36,28 @@ public class UserService : IUserService
         return _mapper.Map<UserDto>(user);
     }
 
-    public async Task<UserDto?> CreateAsync(CreateUserDto dto)
+    public async Task<UserDto?> RegisterAsync(RegisterUserDto dto)
     {
+        var login = Login.Create(dto.Login);
         var email = Email.Create(dto.Email);
-        var passwordHash = _passwordHasher.Hash(dto.Password);
 
-        var user = User.Register(
-            dto.Login,
-            email,
-            passwordHash,
-            dto.Name);
-
-        var userWithSameLogin = await _userRepository.GetByLoginAsync(user.Login);
+        var userWithSameLogin =
+            await _userRepository.GetByLoginAsync(login);
 
         if (userWithSameLogin is not null)
             return null;
 
-        var userWithSameEmail = await _userRepository.GetByEmailAsync(user.Email);
+        var userWithSameEmail = await _userRepository.GetByEmailAsync(email);
 
         if (userWithSameEmail is not null)
             return null;
 
-        var createdUser = await _userRepository.CreateAsync(user);
+        var passwordHash = _passwordHasher.Hash(dto.Password);
 
-        return _mapper.Map<UserDto>(createdUser);
+        var user = User.Register(login, email, passwordHash, dto.Name);
+
+        var registeredUser = await _userRepository.RegisterAsync(user);
+
+        return _mapper.Map<UserDto>(registeredUser);
     }
 }

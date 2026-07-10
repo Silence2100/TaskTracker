@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TaskTracker.Application.Common;
 using TaskTracker.Application.DTOs.Users;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Common;
@@ -36,19 +37,26 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<UserDto>> Create(CreateUserDto dto)
+    public async Task<ActionResult<UserDto>> Register(RegisterUserDto dto)
     {
         try
         {
-            var createdUser = await _userService.CreateAsync(dto);
+            var createdUser = await _userService.RegisterAsync(dto);
 
             if (createdUser is null)
-                return Conflict("User with same login or email already exists.");
+            {
+                return Conflict(
+                    "User with the same login or email already exists.");
+            }
 
             return CreatedAtAction(
                 nameof(GetById),
                 new { id = createdUser.Id },
                 createdUser);
+        }
+        catch (UserAlreadyExistsException exception)
+        {
+            return Conflict(exception.Message);
         }
         catch (DomainException exception)
         {

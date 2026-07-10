@@ -2,7 +2,7 @@
 
 namespace TaskTracker.Application.DTOs.Users;
 
-public class CreateUserDto
+public class RegisterUserDto
 {
     [Required(ErrorMessage = "Login is required.")]
     public string Login { get; set; } = string.Empty;

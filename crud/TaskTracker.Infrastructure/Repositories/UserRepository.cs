@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using TaskTracker.Application.Common;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Domain.ValueObjects;
@@ -30,7 +32,7 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(user => user.Id == id);
     }
 
-    public async Task<User?> GetByLoginAsync(string login)
+    public async Task<User?> GetByLoginAsync(Login login)
     {
         return await _context.Users
             .AsNoTracking()
@@ -44,10 +46,34 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(user => user.Email == email);
     }
 
-    public async Task<User> CreateAsync(User user)
+    public async Task<User> RegisterAsync(User user)
     {
         await _context.Users.AddAsync(user);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "ux_users_login"
+            })
+        {
+            throw new UserAlreadyExistsException(
+                "User with the same login already exists.");
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is PostgresException
+            {
+                SqlState: PostgresErrorCodes.UniqueViolation,
+                ConstraintName: "ux_users_email"
+            })
+        {
+            throw new UserAlreadyExistsException(
+                "User with the same email already exists.");
+        }
 
         return user;
     }
