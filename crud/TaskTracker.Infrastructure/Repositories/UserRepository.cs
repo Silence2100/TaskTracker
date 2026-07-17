@@ -46,7 +46,7 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(user => user.Email == email);
     }
 
-    public async Task<User> RegisterAsync(User user)
+    public async Task RegisterAsync(User user)
     {
         await _context.Users.AddAsync(user);
 
@@ -74,7 +74,5 @@ public class UserRepository : IUserRepository
             throw new UserAlreadyExistsException(
                 "User with the same email already exists.");
         }
-
-        return user;
     }
 }

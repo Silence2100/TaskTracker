@@ -16,6 +16,7 @@ public sealed class EmailValidationTests
     [InlineData("EGOR.TYURIN@mail")]
     [InlineData("EGOR.TYURIN@@mail.com")]
     [InlineData("EGOR@TYURIN@mail.com")]
+
     public void Create_ThrowsDomainException_WhenValueIsInvalid(string? invalidEmail)
     {
         // Act

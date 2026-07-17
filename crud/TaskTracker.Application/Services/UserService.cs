@@ -56,8 +56,9 @@ public class UserService : IUserService
 
         var user = User.Register(login, email, passwordHash, dto.Name);
 
-        var registeredUser = await _userRepository.RegisterAsync(user);
+        await _userRepository.RegisterAsync(user);
 
-        return _mapper.Map<UserDto>(registeredUser);
+        return _mapper.Map<UserDto>(user);
     }
+}
 }
