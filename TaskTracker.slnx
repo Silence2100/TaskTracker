@@ -6,6 +6,7 @@
     <Project Path="crud/TaskTracker.Infrastructure/TaskTracker.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/TaskTracker.Application.Tests/TaskTracker.Application.Tests.csproj" Id="44113bfa-3ec2-4ded-8e56-6961cdb928b0" />
     <Project Path="tests/TaskTracker.Domain.Tests/TaskTracker.Domain.Tests.csproj" Id="004f2f02-67bd-4f29-9fb3-a8938bab1fe5" />
   </Folder>
 </Solution>
