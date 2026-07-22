@@ -47,14 +47,16 @@ public class UserService : IUserService
         if (userWithSameLogin is not null)
             return null;
 
-        var userWithSameEmail = await _userRepository.GetByEmailAsync(email);
-
-        if (userWithSameEmail is not null)
+        if (await _userRepository.HasEmailAsync(email))
             return null;
 
         var passwordHash = _passwordHasher.Hash(dto.Password);
 
-        var user = User.Register(login, email, passwordHash, dto.Name);
+        var user = User.Register(
+            login,
+            email,
+            passwordHash,
+            dto.Name);
 
         await _userRepository.RegisterAsync(user);
 

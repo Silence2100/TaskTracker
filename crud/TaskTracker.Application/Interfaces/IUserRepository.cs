@@ -8,6 +8,6 @@ public interface IUserRepository
     Task<List<User>> GetAllAsync();
     Task<User?> GetByIdAsync(Guid id);
     Task<User?> GetByLoginAsync(Login login);
-    Task<User?> GetByEmailAsync(Email email);
+    Task<bool> HasEmailAsync(Email email);
     Task RegisterAsync(User user);
 }

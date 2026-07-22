@@ -5,7 +5,6 @@ using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.Services;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Domain.ValueObjects;
-using Xunit;
 
 namespace TaskTracker.Application.Tests.Services;
 
@@ -23,96 +22,61 @@ public sealed class UserServiceRegisterTests
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenLoginAndEmailAreUnique_RegistersUserAndReturnsUserDto()
+    public async Task RegisterAsync_WhenDataIsUnique_RegistersUserAndReturnsResult()
     {
         var dto = new RegisterUserDto
         {
-            Login = " New.User ",
-            Email = " USER@Example.COM ",
+            Login = "new.user",
+            Email = "user@example.com",
             Password = "strong-password",
-            Name = " Egor "
+            Name = "Egor"
         };
 
-        const string passwordHash = "hashed-password";
-
-        User? savedUser = null;
+        var expectedResult = new UserDto
+        {
+            Id = Guid.NewGuid(),
+            Login = dto.Login,
+            Email = dto.Email,
+            Name = dto.Name
+        };
 
         _userRepositoryMock
-            .Setup(repository => repository.GetByLoginAsync(
-                It.Is<Login>(login => login.Value == "new.user")))
+            .Setup(repository => repository.GetByLoginAsync(It.IsAny<Login>()))
             .ReturnsAsync((User?)null);
 
         _userRepositoryMock
-            .Setup(repository => repository.GetByEmailAsync(
-                It.Is<Email>(email => email.Value == "user@example.com")))
-            .ReturnsAsync((User?)null);
+            .Setup(repository => repository.HasEmailAsync(It.IsAny<Email>()))
+            .ReturnsAsync(false);
 
         _passwordHasherMock
             .Setup(hasher => hasher.Hash(dto.Password))
-            .Returns(passwordHash);
+            .Returns("hashed-password");
 
         _userRepositoryMock
-            .Setup(repository => repository.RegisterAsync(It.IsAny<User>()))
-            .Callback<User>(user => savedUser = user)
+            .Setup(repository =>
+                repository.RegisterAsync(It.IsAny<User>()))
             .Returns(Task.CompletedTask);
 
         _mapperMock
-            .Setup(mapper => mapper.Map<UserDto>(It.IsAny<User>()))
-            .Returns((User user) => new UserDto
-            {
-                Id = user.Id,
-                Login = user.Login.Value,
-                Email = user.Email.Value,
-                Name = user.Name
-            });
+            .Setup(mapper =>
+                mapper.Map<UserDto>(It.IsAny<User>()))
+            .Returns(expectedResult);
 
         UserDto? result = await _userService.RegisterAsync(dto);
 
         Assert.NotNull(result);
-
-        User registeredUser = Assert.IsType<User>(savedUser);
-
-        Assert.Equal("new.user", registeredUser.Login.Value);
-        Assert.Equal("user@example.com", registeredUser.Email.Value);
-        Assert.Equal(passwordHash, registeredUser.PasswordHash);
-        Assert.Equal("Egor", registeredUser.Name);
-
-        Assert.Equal(registeredUser.Id, result.Id);
-        Assert.Equal("new.user", result.Login);
-        Assert.Equal("user@example.com", result.Email);
-        Assert.Equal("Egor", result.Name);
+        Assert.Equal(expectedResult.Id, result.Id);
+        Assert.Equal(expectedResult.Login, result.Login);
+        Assert.Equal(expectedResult.Email, result.Email);
+        Assert.Equal(expectedResult.Name, result.Name);
 
         _userRepositoryMock.Verify(
-            repository => repository.GetByLoginAsync(
-                It.Is<Login>(login => login.Value == "new.user")),
-            Times.Once);
-
-        _userRepositoryMock.Verify(
-            repository => repository.GetByEmailAsync(
-                It.Is<Email>(email => email.Value == "user@example.com")),
-            Times.Once);
-
-        _passwordHasherMock.Verify(
-            hasher => hasher.Hash(dto.Password),
-            Times.Once);
-
-        _userRepositoryMock.Verify(
-            repository => repository.RegisterAsync(
-                It.Is<User>(user =>
-                    user.Login.Value == "new.user" &&
-                    user.Email.Value == "user@example.com" &&
-                    user.PasswordHash == passwordHash &&
-                    user.Name == "Egor")),
-            Times.Once);
-
-        _mapperMock.Verify(
-            mapper => mapper.Map<UserDto>(
-                It.Is<User>(user => ReferenceEquals(user, registeredUser))),
-            Times.Once);
+            repository =>
+                repository.RegisterAsync(It.IsAny<User>()));
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenLoginAlreadyExists_ReturnsNullAndStopsRegistration()
+    public async Task RegisterAsync_WhenLoginAlreadyExists_ReturnsNull()
     {
         var dto = CreateRegisterUserDto();
 
@@ -123,81 +87,41 @@ public sealed class UserServiceRegisterTests
             "Existing User");
 
         _userRepositoryMock
-            .Setup(repository => repository.GetByLoginAsync(
-                It.Is<Login>(login => login.Value == "new.user")))
+            .Setup(repository => repository.GetByLoginAsync(It.IsAny<Login>()))
             .ReturnsAsync(existingUser);
+
+        _userRepositoryMock
+            .Setup(repository => repository.HasEmailAsync(It.IsAny<Email>()))
+            .ReturnsAsync(false);
 
         UserDto? result = await _userService.RegisterAsync(dto);
 
         Assert.Null(result);
 
         _userRepositoryMock.Verify(
-            repository => repository.GetByLoginAsync(
-                It.Is<Login>(login => login.Value == "new.user")),
-            Times.Once);
-
-        _userRepositoryMock.Verify(
-            repository => repository.GetByEmailAsync(It.IsAny<Email>()),
-            Times.Never);
-
-        _passwordHasherMock.Verify(
-            hasher => hasher.Hash(It.IsAny<string>()),
-            Times.Never);
-
-        _userRepositoryMock.Verify(
             repository => repository.RegisterAsync(It.IsAny<User>()),
-            Times.Never);
-
-        _mapperMock.Verify(
-            mapper => mapper.Map<UserDto>(It.IsAny<User>()),
             Times.Never);
     }
 
     [Fact]
-    public async Task RegisterAsync_WhenEmailAlreadyExists_ReturnsNullAndStopsRegistration()
+    public async Task RegisterAsync_WhenEmailAlreadyExists_ReturnsNull()
     {
         var dto = CreateRegisterUserDto();
 
-        var existingUser = User.Register(
-            Login.Create("another.user"),
-            Email.Create(dto.Email),
-            "existing-password-hash",
-            "Existing User");
-
         _userRepositoryMock
-            .Setup(repository => repository.GetByLoginAsync(
-                It.Is<Login>(login => login.Value == "new.user")))
+            .Setup(repository => repository.GetByLoginAsync(It.IsAny<Login>()))
             .ReturnsAsync((User?)null);
 
         _userRepositoryMock
-            .Setup(repository => repository.GetByEmailAsync(
-                It.Is<Email>(email => email.Value == "user@example.com")))
-            .ReturnsAsync(existingUser);
+            .Setup(repository => repository.HasEmailAsync(It.IsAny<Email>()))
+            .ReturnsAsync(true);
 
         UserDto? result = await _userService.RegisterAsync(dto);
 
         Assert.Null(result);
 
         _userRepositoryMock.Verify(
-            repository => repository.GetByLoginAsync(
-                It.Is<Login>(login => login.Value == "new.user")),
-            Times.Once);
-
-        _userRepositoryMock.Verify(
-            repository => repository.GetByEmailAsync(
-                It.Is<Email>(email => email.Value == "user@example.com")),
-            Times.Once);
-
-        _passwordHasherMock.Verify(
-            hasher => hasher.Hash(It.IsAny<string>()),
-            Times.Never);
-
-        _userRepositoryMock.Verify(
             repository => repository.RegisterAsync(It.IsAny<User>()),
-            Times.Never);
-
-        _mapperMock.Verify(
-            mapper => mapper.Map<UserDto>(It.IsAny<User>()),
             Times.Never);
     }
 

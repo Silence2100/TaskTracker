@@ -39,11 +39,10 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(user => user.Login == login);
     }
 
-    public async Task<User?> GetByEmailAsync(Email email)
+    public async Task<bool> HasEmailAsync(Email email)
     {
         return await _context.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(user => user.Email == email);
+            .AnyAsync(user => user.Email == email);
     }
 
     public async Task RegisterAsync(User user)
