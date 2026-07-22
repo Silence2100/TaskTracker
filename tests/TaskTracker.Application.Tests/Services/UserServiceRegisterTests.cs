@@ -24,13 +24,7 @@ public sealed class UserServiceRegisterTests
     [Fact]
     public async Task RegisterAsync_WhenDataIsUnique_RegistersUserAndReturnsResult()
     {
-        var dto = new RegisterUserDto
-        {
-            Login = "new.user",
-            Email = "user@example.com",
-            Password = "strong-password",
-            Name = "Egor"
-        };
+        var dto = CreateRegisterUserDto();
 
         var expectedResult = new UserDto
         {
