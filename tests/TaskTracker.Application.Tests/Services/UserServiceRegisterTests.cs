@@ -53,13 +53,11 @@ public sealed class UserServiceRegisterTests
             .Returns("hashed-password");
 
         _userRepositoryMock
-            .Setup(repository =>
-                repository.RegisterAsync(It.IsAny<User>()))
+            .Setup(repository => repository.RegisterAsync(It.IsAny<User>()))
             .Returns(Task.CompletedTask);
 
         _mapperMock
-            .Setup(mapper =>
-                mapper.Map<UserDto>(It.IsAny<User>()))
+            .Setup(mapper => mapper.Map<UserDto>(It.IsAny<User>()))
             .Returns(expectedResult);
 
         UserDto? result = await _userService.RegisterAsync(dto);
@@ -71,8 +69,7 @@ public sealed class UserServiceRegisterTests
         Assert.Equal(expectedResult.Name, result.Name);
 
         _userRepositoryMock.Verify(
-            repository =>
-                repository.RegisterAsync(It.IsAny<User>()));
+            repository => repository.RegisterAsync(It.IsAny<User>()));
     }
 
     [Fact]
