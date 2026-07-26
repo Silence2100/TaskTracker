@@ -5,6 +5,7 @@ using TaskTracker.Application.Interfaces;
 using TaskTracker.Infrastructure.Data;
 using TaskTracker.Infrastructure.Repositories;
 using TaskTracker.Infrastructure.Security;
+using System.Text;
 
 namespace TaskTracker.Infrastructure;
 
@@ -20,10 +21,21 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString);
         });
 
+        services
+            .AddOptions<JwtOptions>()
+            .Bind(configuration.GetRequiredSection(JwtOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "Jwt:Issuer is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "Jwt:Audience is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.SecretKey), "Jwt:SecretKey is required.")
+            .Validate(options => Encoding.UTF8.GetByteCount(options.SecretKey) >= 32, "Jwt:SecretKey must contain at least 32 bytes.")
+            .Validate(options => options.ExpirationMinutes > 0, "Jwt:ExpirationMinutes must be greater than zero.")
+            .ValidateOnStart();
+
         services.AddScoped<ITaskRepository, TaskRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IPasswordHasher, UserPasswordHasher>();
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }

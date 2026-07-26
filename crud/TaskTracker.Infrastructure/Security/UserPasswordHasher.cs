@@ -15,4 +15,14 @@ public class UserPasswordHasher : IPasswordHasher
 
         return _passwordHasher.HashPassword(new object(), password);
     }
+
+    public bool Verify(string passwordHash, string providedPassword)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash) || string.IsNullOrWhiteSpace(providedPassword))
+            return false;
+
+        var result = _passwordHasher.VerifyHashedPassword(new object(), passwordHash, providedPassword);
+
+        return result is PasswordVerificationResult.Success;
+    }
 }
