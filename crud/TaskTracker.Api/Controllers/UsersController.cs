@@ -44,10 +44,7 @@ public class UsersController : ControllerBase
             var createdUser = await _userService.RegisterAsync(dto);
 
             if (createdUser is null)
-            {
-                return Conflict(
-                    "User with the same login or email already exists.");
-            }
+                return Conflict("User with the same login or email already exists.");
 
             return CreatedAtAction(
                 nameof(GetById),

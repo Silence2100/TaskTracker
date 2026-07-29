@@ -23,6 +23,6 @@ public class UserPasswordHasher : IPasswordHasher
 
         var result = _passwordHasher.VerifyHashedPassword(new object(), passwordHash, providedPassword);
 
-        return result is PasswordVerificationResult.Success;
+        return result is PasswordVerificationResult.Success or PasswordVerificationResult.SuccessRehashNeeded;
     }
 }

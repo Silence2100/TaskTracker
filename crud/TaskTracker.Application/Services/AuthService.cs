@@ -30,9 +30,7 @@ public class AuthService : IAuthService
         if (user is null)
             return null;
 
-        var isPasswordValid = _passwordHasher.Verify(user.PasswordHash, dto.Password);
-
-        if (!isPasswordValid)
+        if (!_passwordHasher.Verify(user.PasswordHash, dto.Password))
             return null;
 
         var accessToken = _jwtTokenGenerator.Generate(user);
