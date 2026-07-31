@@ -1,13 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 using TaskTracker.Application.Common;
 using TaskTracker.Application.DTOs.Users;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Common;
+using TaskTracker.Domain.Enums;
 
 namespace TaskTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = nameof(UserRole.Admin))]
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -36,6 +40,7 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
+    [AllowAnonymous]
     [HttpPost]
     public async Task<ActionResult<UserDto>> Register(RegisterUserDto dto)
     {

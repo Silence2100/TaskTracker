@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+
+using TaskTracker.Domain.Enums;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Domain.ValueObjects;
 
@@ -58,6 +60,13 @@ public class AppDbContext : DbContext
             entity.Property(user => user.Name)
                 .HasColumnName("name")
                 .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(user => user.Role)
+                .HasColumnName("role")
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .HasDefaultValue(UserRole.User)
                 .IsRequired();
 
             entity.HasIndex(user => user.Login)

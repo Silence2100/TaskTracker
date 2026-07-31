@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
+using TaskTracker.Application.Common;
 using TaskTracker.Application.DTOs.Auth;
+using TaskTracker.Domain.Enums;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Common;
 
@@ -16,11 +18,13 @@ namespace TaskTracker.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+
     public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<AuthResponseDto>> Login(LoginUserDto dto)
     {
@@ -40,7 +44,7 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("auth")]
+    [HttpGet("me")]
     public ActionResult<CurrentUserDto> GetCurrentUser()
     {
         var userIdValue = User.FindFirstValue(JwtRegisteredClaimNames.Sub);
@@ -49,8 +53,15 @@ public class AuthController : ControllerBase
 
         var email = User.FindFirstValue(JwtRegisteredClaimNames.Email);
 
-        if (!Guid.TryParse(userIdValue, out var userId) || string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(email))
+        var roleValue = User.FindFirstValue(JwtClaimNames.Role);
+
+        if (!Guid.TryParse(userIdValue, out var userId) 
+            || string.IsNullOrWhiteSpace(login) 
+            || string.IsNullOrWhiteSpace(email) 
+            || !Enum.TryParse<UserRole>(roleValue, ignoreCase: true, out var role))
+        {
             return Unauthorized();
+        }
 
         return Ok(new CurrentUserDto
         {

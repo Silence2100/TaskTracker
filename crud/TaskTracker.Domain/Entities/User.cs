@@ -1,4 +1,5 @@
 ﻿using TaskTracker.Domain.Common;
+using TaskTracker.Domain.Enums;
 using TaskTracker.Domain.ValueObjects;
 
 namespace TaskTracker.Domain.Entities;
@@ -13,6 +14,7 @@ public class User
     public Email Email { get; private set; } = null!;
     public string PasswordHash { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
+    public UserRole Role { get; private set; }
 
     public List<ProjectMember> ProjectMembers { get; private set; } = new();
     public List<TaskItem> AuthoredTasks { get; private set; } = new();
@@ -20,13 +22,22 @@ public class User
 
     private User() { } // For EF Core
 
-    private User(Guid id, Login login, Email email, string passwordHash, string name)
+    private User(Guid id, Login login, Email email, string passwordHash, string name, UserRole role)
     {
         Id = id;
         Login = login;
         Email = email;
         PasswordHash = passwordHash;
         Name = name;
+        Role = role;
+    }
+
+    public void ChangeRole(UserRole role)
+    {
+        if (!Enum.IsDefined(typeof(UserRole), role))
+            throw new DomainException("Invalid user role.");
+
+        Role = role;
     }
 
     public static User Register(Login login, Email email, string passwordHash, string name)
@@ -46,7 +57,7 @@ public class User
             "Password hash cannot be empty.",
             $"Password hash cannot be longer than {PasswordMaxLength} characters.");
 
-        return new User(Guid.NewGuid(), login, email, normalizedPasswordHash, normalizedName);
+        return new User(Guid.NewGuid(), login, email, normalizedPasswordHash, normalizedName, UserRole.User);
     }
 
     private static string NormalizeRequiredString(string value, int maxLength, string emptyErrorMessage, string maxLengthErrorMessage)

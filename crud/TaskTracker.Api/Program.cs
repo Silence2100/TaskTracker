@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 using TaskTracker.Application;
+using TaskTracker.Application.Common;
 using TaskTracker.Infrastructure;
 using TaskTracker.Infrastructure.Security;
 
@@ -16,9 +17,7 @@ builder.Services
     .AddControllers()
     .AddJsonOptions(options =>
     {
-            options.JsonSerializerOptions
-            .Converters
-            .Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
 builder.Services.AddApplication();
@@ -30,35 +29,28 @@ var jwtOptions = builder.Configuration
     ?? throw new InvalidOperationException("JWT configuration was not found.");
 
 builder.Services
-    .AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.MapInboundClaims = false;
 
-        options.TokenValidationParameters =
-            new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidIssuer = jwtOptions.Issuer,
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
 
-                ValidateAudience = true,
-                ValidAudience = jwtOptions.Audience,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
 
-                ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
 
-                ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
 
-                ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
-
-                ClockSkew = TimeSpan.Zero,
-
-                NameClaimType = JwtRegisteredClaimNames.Name
-            };
+            NameClaimType = JwtRegisteredClaimNames.Name,
+            RoleClaimType = JwtClaimNames.Role
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -82,7 +74,7 @@ builder.Services.AddSwaggerGen(options =>
     options.AddSecurityRequirement(
         document => new OpenApiSecurityRequirement
         {
-            [new OpenApiSecuritySchemeReference(schemeId,document)] = []
+            [new OpenApiSecuritySchemeReference(schemeId, document)] = []
         });
 });
 
