@@ -9,5 +9,5 @@ Required secrets:
 
 Set them with:
 
-dotnet user-secrets set "ConnectionStrings:PostgresConnection" "..." --project crud/TaskTracker.Api
-dotnet user-secrets set "Jwt:SecretKey" "..." --project crud/TaskTracker.Api
+dotnet user-secrets set "ConnectionStrings:PostgresConnection" "..." --project src/TaskTracker.Api
+dotnet user-secrets set "Jwt:SecretKey" "..." --project src/TaskTracker.Api
