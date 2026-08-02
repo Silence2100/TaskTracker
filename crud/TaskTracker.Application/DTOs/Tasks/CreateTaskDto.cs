@@ -7,5 +7,4 @@ public class CreateTaskDto
     public string? Description { get; set; }
     public DateTime? Deadline { get; set; }
     public Guid? AssignedUserId { get; set; }
-    public Guid AuthorId { get; set; }
 }

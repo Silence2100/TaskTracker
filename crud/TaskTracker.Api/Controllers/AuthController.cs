@@ -6,10 +6,9 @@ using System.Security.Claims;
 
 using TaskTracker.Application.Common;
 using TaskTracker.Application.DTOs.Auth;
-using TaskTracker.Domain.Enums;
 using TaskTracker.Application.Interfaces;
+using TaskTracker.Domain.Enums;
 using TaskTracker.Domain.Common;
-
 
 namespace TaskTracker.Api.Controllers;
 
@@ -67,7 +66,8 @@ public class AuthController : ControllerBase
         {
             Id = userId,
             Login = login,
-            Email = email
+            Email = email,
+            Role = role
         });
     }
 }

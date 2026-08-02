@@ -25,6 +25,18 @@ public class TaskRepository : ITaskRepository
             .ToListAsync();
     }
 
+    public async Task<List<TaskItem>> GetAllForUserAsync(Guid userId)
+    {
+        return await _context.Tasks
+            .AsNoTracking()
+            .Include(task => task.Project)
+            .Include(task => task.Author)
+            .Include(task => task.AssignedUser)
+            .Where(task => task.Project.Members.Any(member => member.UserId == userId))
+            .OrderByDescending(task => task.CreatedAt)
+            .ToListAsync();
+    }
+
     public async Task<TaskItem?> GetByIdAsync(Guid id)
     {
         return await _context.Tasks

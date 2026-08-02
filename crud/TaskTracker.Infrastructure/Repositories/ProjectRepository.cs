@@ -23,6 +23,17 @@ public class ProjectRepository : IProjectRepository
             .ToListAsync();
     }
 
+    public async Task<List<Project>> GetAllForUserAsync(Guid userId)
+    {
+        return await _context.Projects
+            .AsNoTracking()
+            .Include(project => project.Tasks)
+            .Include(project => project.Members)
+            .Where(project => project.Members.Any(member => member.UserId == userId))
+            .OrderBy(project => project.Name)
+            .ToListAsync();
+    }
+
     public async Task<Project?> GetByIdAsync(Guid id)
     {
         return await _context.Projects
@@ -48,5 +59,12 @@ public class ProjectRepository : IProjectRepository
             .Where(member => member.ProjectId == projectId)
             .OrderBy(member => member.User.Name)
             .ToListAsync();
+    }
+
+    public async Task<bool> IsMemberAsync(Guid projectId, Guid userId)
+    {
+        return await _context.ProjectMembers
+            .AsNoTracking()
+            .AnyAsync(member => member.ProjectId == projectId && member.UserId == userId);
     }
 }

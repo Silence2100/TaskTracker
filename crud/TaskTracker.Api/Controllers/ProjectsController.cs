@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using TaskTracker.Api.Extensions;
 using TaskTracker.Application.DTOs.Projects;
 using TaskTracker.Application.Interfaces;
 
@@ -21,7 +22,13 @@ public class ProjectsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<ProjectDto>>> GetAll()
     {
-        var projects = await _projectService.GetAllAsync();
+        var userId = User.GetUserId();
+        var role = User.GetUserRole();
+
+        if (userId is null || role is null)
+            return Unauthorized();
+
+        var projects = await _projectService.GetAllAsync(userId.Value, role.Value);
 
         return Ok(projects);
     }
@@ -29,7 +36,13 @@ public class ProjectsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProjectDto>> GetById(Guid id)
     {
-        var project = await _projectService.GetByIdAsync(id);
+        var userId = User.GetUserId();
+        var role = User.GetUserRole();
+
+        if (userId is null || role is null)
+            return Unauthorized();
+
+        var project = await _projectService.GetByIdAsync(id, userId.Value, role.Value);
 
         if (project is null)
             return NotFound();
@@ -40,7 +53,13 @@ public class ProjectsController : ControllerBase
     [HttpGet("{id:guid}/members")]
     public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid id)
     {
-        var members = await _projectService.GetMembersAsync(id);
+        var userId = User.GetUserId();
+        var role = User.GetUserRole();
+
+        if (userId is null || role is null)
+            return Unauthorized();
+
+        var members = await _projectService.GetMembersAsync(id, userId.Value, role.Value);
 
         if (members is null)
             return NotFound();
@@ -54,13 +73,15 @@ public class ProjectsController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Name))
             return BadRequest("Project name is required.");
 
-        if (dto.OwnerUserId == Guid.Empty)
-            return BadRequest("OwnerUserId is required.");
+        var ownerUserId = User.GetUserId();
 
-        var createdProject = await _projectService.CreateAsync(dto);
+        if (ownerUserId is null)
+            return Unauthorized();
+
+        var createdProject = await _projectService.CreateAsync(dto, ownerUserId.Value);
 
         if (createdProject is null)
-            return BadRequest("Owner user was not found.");
+            return Unauthorized();
 
         return CreatedAtAction(
             nameof(GetById),

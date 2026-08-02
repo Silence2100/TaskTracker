@@ -41,8 +41,7 @@ public class UserService : IUserService
         var login = Login.Create(dto.Login);
         var email = Email.Create(dto.Email);
 
-        var userWithSameLogin =
-            await _userRepository.GetByLoginAsync(login);
+        var userWithSameLogin = await _userRepository.GetByLoginAsync(login);
 
         if (userWithSameLogin is not null)
             return null;
@@ -52,11 +51,7 @@ public class UserService : IUserService
 
         var passwordHash = _passwordHasher.Hash(dto.Password);
 
-        var user = User.Register(
-            login,
-            email,
-            passwordHash,
-            dto.Name);
+        var user = User.Register(login, email, passwordHash, dto.Name);
 
         await _userRepository.RegisterAsync(user);
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using TaskTracker.Api.Extensions;
 using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Enums;
@@ -22,7 +23,13 @@ public class TasksController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<TaskDto>>> GetAll()
     {
-        var tasks = await _taskService.GetAllAsync();
+        var userId = User.GetUserId();
+        var role = User.GetUserRole();
+
+        if (userId is null || role is null)
+            return Unauthorized();
+
+        var tasks = await _taskService.GetAllAsync(userId.Value, role.Value);
 
         return Ok(tasks);
     }
@@ -30,7 +37,13 @@ public class TasksController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TaskDto>> GetById(Guid id)
     {
-        var task = await _taskService.GetByIdAsync(id);
+        var userId = User.GetUserId();
+        var role = User.GetUserRole();
+
+        if (userId is null || role is null)
+            return Unauthorized();
+
+        var task = await _taskService.GetByIdAsync(id, userId.Value, role.Value);
 
         if (task is null)
             return NotFound();
@@ -44,16 +57,22 @@ public class TasksController : ControllerBase
         if (dto.ProjectId == Guid.Empty)
             return BadRequest("ProjectId is required.");
 
-        if (dto.AuthorId == Guid.Empty)
-            return BadRequest("AuthorId is required.");
-
         if (dto.AssignedUserId == Guid.Empty)
             return BadRequest("AssignedUserId is invalid.");
 
         if (string.IsNullOrWhiteSpace(dto.Title))
             return BadRequest("Title is required.");
 
-        var createdTask = await _taskService.CreateAsync(dto);
+        var userId = User.GetUserId();
+        var role = User.GetUserRole();
+
+        if (userId is null || role is null)
+            return Unauthorized();
+
+        var createdTask = await _taskService.CreateAsync(dto, userId.Value, role.Value);
+
+        if (createdTask is null)
+            return NotFound();
 
         return CreatedAtAction(
             nameof(GetById),
@@ -73,9 +92,15 @@ public class TasksController : ControllerBase
         if (dto.AssignedUserId == Guid.Empty)
             return BadRequest("AssignedUserId is invalid.");
 
-        var isUpdated = await _taskService.UpdateAsync(id, dto);
+        var userId = User.GetUserId();
+        var role = User.GetUserRole();
 
-        if (isUpdated == false)
+        if (userId is null || role is null)
+            return Unauthorized();
+
+        var isUpdated = await _taskService.UpdateAsync(id, dto, userId.Value, role.Value);
+
+        if (!isUpdated)
             return NotFound();
 
         return NoContent();
@@ -84,9 +109,15 @@ public class TasksController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var isDeleted = await _taskService.DeleteAsync(id);
+        var userId = User.GetUserId();
+        var role = User.GetUserRole();
 
-        if (isDeleted == false)
+        if (userId is null || role is null)
+            return Unauthorized();
+
+        var isDeleted = await _taskService.DeleteAsync(id, userId.Value, role.Value);
+
+        if (!isDeleted)
             return NotFound();
 
         return NoContent();

@@ -20,7 +20,7 @@ public class User
     public List<TaskItem> AuthoredTasks { get; private set; } = new();
     public List<TaskItem> AssignedTasks { get; private set; } = new();
 
-    private User() { } // For EF Core
+    private User() { }
 
     private User(Guid id, Login login, Email email, string passwordHash, string name, UserRole role)
     {

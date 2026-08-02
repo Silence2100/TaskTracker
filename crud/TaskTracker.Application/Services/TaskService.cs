@@ -9,33 +9,47 @@ namespace TaskTracker.Application.Services;
 public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
+    private readonly IProjectRepository _projectRepository;
     private readonly IMapper _mapper;
 
-    public TaskService(ITaskRepository taskRepository, IMapper mapper)
+    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository, IMapper mapper)
     {
         _taskRepository = taskRepository;
+        _projectRepository = projectRepository;
         _mapper = mapper;
     }
 
-    public async Task<List<TaskDto>> GetAllAsync()
+    public async Task<List<TaskDto>> GetAllAsync(Guid currentUserId, UserRole currentUserRole)
     {
-        var tasks = await _taskRepository.GetAllAsync();
+        var tasks = currentUserRole == UserRole.Admin
+            ? await _taskRepository.GetAllAsync()
+            : await _taskRepository.GetAllForUserAsync(currentUserId);
 
         return _mapper.Map<List<TaskDto>>(tasks);
     }
 
-    public async Task<TaskDto?> GetByIdAsync(Guid id)
+    public async Task<TaskDto?> GetByIdAsync(Guid id, Guid currentUserId, UserRole currentUserRole)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
         if (task is null)
             return null;
 
+        var canAccess = await CanAccessProjectAsync(task.ProjectId, currentUserId, currentUserRole);
+
+        if (!canAccess)
+            return null;
+
         return _mapper.Map<TaskDto>(task);
     }
 
-    public async Task<TaskDto> CreateAsync(CreateTaskDto dto)
+    public async Task<TaskDto?> CreateAsync(CreateTaskDto dto, Guid authorId, UserRole currentUserRole)
     {
+        var canAccess = await CanAccessProjectAsync(dto.ProjectId, authorId, currentUserRole);
+
+        if (!canAccess)
+            return null;
+
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
@@ -47,7 +61,7 @@ public class TaskService : ITaskService
             Deadline = NormalizeDateTime(dto.Deadline),
             Status = TaskItemStatus.Todo,
             AssignedUserId = dto.AssignedUserId,
-            AuthorId = dto.AuthorId,
+            AuthorId = authorId,
             CreatedAt = DateTime.UtcNow,
             UpdateAt = null
         };
@@ -57,11 +71,16 @@ public class TaskService : ITaskService
         return _mapper.Map<TaskDto>(createdTask);
     }
 
-    public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto)
+    public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto, Guid currentUserId, UserRole currentUserRole)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
         if (task is null)
+            return false;
+
+        var canAccess = await CanAccessProjectAsync(task.ProjectId, currentUserId, currentUserRole);
+
+        if (!canAccess)
             return false;
 
         task.Title = dto.Title.Trim();
@@ -78,11 +97,16 @@ public class TaskService : ITaskService
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id, Guid currentUserId, UserRole currentUserRole)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
         if (task is null)
+            return false;
+
+        var canAccess = await CanAccessProjectAsync(task.ProjectId, currentUserId, currentUserRole);
+
+        if (!canAccess)
             return false;
 
         await _taskRepository.DeleteAsync(task);
@@ -99,5 +123,13 @@ public class TaskService : ITaskService
             return DateTime.SpecifyKind(dateTime.Value, DateTimeKind.Utc);
 
         return dateTime.Value.ToUniversalTime();
+    }
+
+    private async Task<bool> CanAccessProjectAsync(Guid projectId, Guid userId, UserRole userRole)
+    {
+        if (userRole == UserRole.Admin)
+            return true;
+
+        return await _projectRepository.IsMemberAsync(projectId, userId);
     }
 }
