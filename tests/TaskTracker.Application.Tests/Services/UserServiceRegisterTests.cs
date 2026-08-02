@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Moq;
+﻿using Moq;
 using TaskTracker.Application.DTOs.Users;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.Services;
@@ -12,13 +11,12 @@ public sealed class UserServiceRegisterTests
 {
     private readonly Mock<IUserRepository> _userRepositoryMock = new();
     private readonly Mock<IPasswordHasher> _passwordHasherMock = new();
-    private readonly Mock<IMapper> _mapperMock = new();
 
     private readonly UserService _userService;
 
     public UserServiceRegisterTests()
     {
-        _userService = new UserService(_userRepositoryMock.Object, _passwordHasherMock.Object, _mapperMock.Object);
+        _userService = new UserService(_userRepositoryMock.Object, _passwordHasherMock.Object);
     }
 
     [Fact]
@@ -49,10 +47,6 @@ public sealed class UserServiceRegisterTests
         _userRepositoryMock
             .Setup(repository => repository.RegisterAsync(It.IsAny<User>()))
             .Returns(Task.CompletedTask);
-
-        _mapperMock
-            .Setup(mapper => mapper.Map<UserDto>(It.IsAny<User>()))
-            .Returns(expectedResult);
 
         UserDto? result = await _userService.RegisterAsync(dto);
 

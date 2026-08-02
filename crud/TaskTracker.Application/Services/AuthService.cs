@@ -1,6 +1,5 @@
-﻿using AutoMapper;
-using TaskTracker.Application.DTOs.Auth;
-using TaskTracker.Application.DTOs.Users;
+﻿using TaskTracker.Application.DTOs.Auth;
+using TaskTracker.Application.Mappings;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.ValueObjects;
 
@@ -11,14 +10,12 @@ public class AuthService : IAuthService
     private readonly IPasswordHasher _passwordHasher;
     private readonly IUserRepository _userRepository;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
-    private readonly IMapper _mapper;
 
-    public AuthService(IPasswordHasher passwordHasher, IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator, IMapper mapper)
+    public AuthService(IPasswordHasher passwordHasher, IUserRepository userRepository, IJwtTokenGenerator jwtTokenGenerator)
     {
         _passwordHasher = passwordHasher;
         _userRepository = userRepository;
         _jwtTokenGenerator = jwtTokenGenerator;
-        _mapper = mapper;
     }
 
     public async Task<AuthResponseDto?> LoginAsync(LoginUserDto dto)
@@ -38,7 +35,7 @@ public class AuthService : IAuthService
         return new AuthResponseDto
         {
             AccessToken = accessToken,
-            User = _mapper.Map<UserDto>(user)
+            User = user.ToDto()
         };
     }
 }

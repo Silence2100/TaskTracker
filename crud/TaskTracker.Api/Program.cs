@@ -6,7 +6,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 using TaskTracker.Application;
-using TaskTracker.Application.Common;
 using TaskTracker.Infrastructure;
 using TaskTracker.Infrastructure.Security;
 

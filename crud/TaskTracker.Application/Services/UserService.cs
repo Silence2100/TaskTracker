@@ -1,6 +1,6 @@
-﻿using AutoMapper;
-using TaskTracker.Application.DTOs.Users;
+﻿using TaskTracker.Application.DTOs.Users;
 using TaskTracker.Application.Interfaces;
+using TaskTracker.Application.Mappings;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Domain.ValueObjects;
 
@@ -10,20 +10,18 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly IMapper _mapper;
 
-    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher, IMapper mapper)
+    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
-        _mapper = mapper;
     }
 
     public async Task<List<UserDto>> GetAllAsync()
     {
         var users = await _userRepository.GetAllAsync();
 
-        return _mapper.Map<List<UserDto>>(users);
+        return users.Select(user => user.ToDto()).ToList();
     }
 
     public async Task<UserDto?> GetByIdAsync(Guid id)
@@ -33,7 +31,7 @@ public class UserService : IUserService
         if (user is null)
             return null;
 
-        return _mapper.Map<UserDto>(user);
+        return user.ToDto();
     }
 
     public async Task<UserDto?> RegisterAsync(RegisterUserDto dto)
@@ -55,6 +53,6 @@ public class UserService : IUserService
 
         await _userRepository.RegisterAsync(user);
 
-        return _mapper.Map<UserDto>(user);
+        return user.ToDto();
     }
 }

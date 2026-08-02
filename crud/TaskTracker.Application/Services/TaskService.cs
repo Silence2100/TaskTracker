@@ -1,6 +1,6 @@
-﻿using AutoMapper;
-using TaskTracker.Application.DTOs.Tasks;
+﻿using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
+using TaskTracker.Application.Mappings;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Domain.Enums;
 
@@ -10,13 +10,11 @@ public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
     private readonly IProjectRepository _projectRepository;
-    private readonly IMapper _mapper;
 
-    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository, IMapper mapper)
+    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository)
     {
         _taskRepository = taskRepository;
         _projectRepository = projectRepository;
-        _mapper = mapper;
     }
 
     public async Task<List<TaskDto>> GetAllAsync(Guid currentUserId, UserRole currentUserRole)
@@ -25,7 +23,7 @@ public class TaskService : ITaskService
             ? await _taskRepository.GetAllAsync()
             : await _taskRepository.GetAllForUserAsync(currentUserId);
 
-        return _mapper.Map<List<TaskDto>>(tasks);
+        return tasks.Select(task => task.ToDto()).ToList();
     }
 
     public async Task<TaskDto?> GetByIdAsync(Guid id, Guid currentUserId, UserRole currentUserRole)
@@ -40,7 +38,7 @@ public class TaskService : ITaskService
         if (!canAccess)
             return null;
 
-        return _mapper.Map<TaskDto>(task);
+        return task.ToDto();
     }
 
     public async Task<TaskDto?> CreateAsync(CreateTaskDto dto, Guid authorId, UserRole currentUserRole)
@@ -68,7 +66,7 @@ public class TaskService : ITaskService
 
         var createdTask = await _taskRepository.CreateAsync(task);
 
-        return _mapper.Map<TaskDto>(createdTask);
+        return createdTask.ToDto();
     }
 
     public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto, Guid currentUserId, UserRole currentUserRole)

@@ -1,6 +1,6 @@
-﻿using AutoMapper;
-using TaskTracker.Application.DTOs.Projects;
+﻿using TaskTracker.Application.DTOs.Projects;
 using TaskTracker.Application.Interfaces;
+using TaskTracker.Application.Mappings;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Domain.Enums;
 
@@ -10,16 +10,11 @@ public class ProjectService : IProjectService
 {
     private readonly IProjectRepository _projectRepository;
     private readonly IUserRepository _userRepository;
-    private readonly IMapper _mapper;
 
-    public ProjectService(
-        IProjectRepository projectRepository,
-        IUserRepository userRepository,
-        IMapper mapper)
+    public ProjectService(IProjectRepository projectRepository, IUserRepository userRepository)
     {
         _projectRepository = projectRepository;
         _userRepository = userRepository;
-        _mapper = mapper;
     }
 
     public async Task<List<ProjectDto>> GetAllAsync(Guid currentUserId, UserRole currentUserRole)
@@ -28,7 +23,7 @@ public class ProjectService : IProjectService
             ? await _projectRepository.GetAllAsync()
             : await _projectRepository.GetAllForUserAsync(currentUserId);
 
-        return _mapper.Map<List<ProjectDto>>(projects);
+        return projects.Select(project => project.ToDto()).ToList();
     }
 
     public async Task<ProjectDto?> GetByIdAsync(Guid id, Guid currentUserId, UserRole currentUserRole)
@@ -46,7 +41,7 @@ public class ProjectService : IProjectService
                 return null;
         }
 
-        return _mapper.Map<ProjectDto>(project);
+        return project.ToDto();
     }
 
     public async Task<ProjectDto?> CreateAsync(CreateProjectDto dto, Guid ownerUserId)
@@ -72,7 +67,7 @@ public class ProjectService : IProjectService
 
         var createdProject = await _projectRepository.CreateAsync(project);
 
-        return _mapper.Map<ProjectDto>(createdProject);
+        return createdProject.ToDto();
     }
 
     public async Task<List<ProjectMemberDto>?> GetMembersAsync(Guid projectId, Guid currentUserId, UserRole currentUserRole)
@@ -92,6 +87,6 @@ public class ProjectService : IProjectService
 
         var members = await _projectRepository.GetMembersAsync(projectId);
 
-        return _mapper.Map<List<ProjectMemberDto>>(members);
+        return members.Select(member => member.ToDto()).ToList();
     }
 }
