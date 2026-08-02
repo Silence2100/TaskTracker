@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\crud\TaskTracker.Application\TaskTracker.Application.csproj" />
+    <ProjectReference Include="..\..\src\TaskTracker.Application\TaskTracker.Application.csproj" />
   </ItemGroup>
 
 </Project>

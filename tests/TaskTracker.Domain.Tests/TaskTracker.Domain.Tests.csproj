@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\crud\TaskTracker.Domain\TaskTracker.Domain.csproj" />
+    <ProjectReference Include="..\..\src\TaskTracker.Domain\TaskTracker.Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

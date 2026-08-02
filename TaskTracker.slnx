@@ -1,9 +1,9 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="crud/TaskTracker.Api/TaskTracker.Api.csproj" />
-    <Project Path="crud/TaskTracker.Application/TaskTracker.Application.csproj" />
-    <Project Path="crud/TaskTracker.Domain/TaskTracker.Domain.csproj" />
-    <Project Path="crud/TaskTracker.Infrastructure/TaskTracker.Infrastructure.csproj" />
+    <Project Path="src/TaskTracker.Api/TaskTracker.Api.csproj" />
+    <Project Path="src/TaskTracker.Application/TaskTracker.Application.csproj" />
+    <Project Path="src/TaskTracker.Domain/TaskTracker.Domain.csproj" />
+    <Project Path="src/TaskTracker.Infrastructure/TaskTracker.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TaskTracker.Application.Tests/TaskTracker.Application.Tests.csproj" Id="44113bfa-3ec2-4ded-8e56-6961cdb928b0" />
