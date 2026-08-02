@@ -1,6 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
-using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -13,13 +12,7 @@ using TaskTracker.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
-
+builder.Services.AddControllers();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -49,7 +42,6 @@ builder.Services
             ClockSkew = TimeSpan.Zero,
 
             NameClaimType = JwtRegisteredClaimNames.Name,
-            RoleClaimType = JwtClaimNames.Role
         };
     });
 

@@ -64,8 +64,6 @@ public class AppDbContext : DbContext
 
             entity.Property(user => user.Role)
                 .HasColumnName("role")
-                .HasConversion<string>()
-                .HasMaxLength(20)
                 .HasDefaultValue(UserRole.User)
                 .IsRequired();
 
@@ -118,8 +116,6 @@ public class AppDbContext : DbContext
 
             entity.Property(member => member.Role)
                 .HasColumnName("role")
-                .HasConversion<string>()
-                .HasMaxLength(50)
                 .IsRequired();
 
             entity.HasOne(member => member.User)
@@ -164,8 +160,6 @@ public class AppDbContext : DbContext
 
             entity.Property(task => task.Status)
                 .HasColumnName("status")
-                .HasConversion<string>()
-                .HasMaxLength(50)
                 .IsRequired();
 
             entity.Property(task => task.AssignedUserId)
