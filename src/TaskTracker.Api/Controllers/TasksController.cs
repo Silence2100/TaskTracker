@@ -46,7 +46,7 @@ public class TasksController : ControllerBase
         if (task is null)
             return NotFound();
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task, Policies.ProjectMember);
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task.ProjectId, Policies.ProjectMember);
 
         if (!authorizationResult.Succeeded)
             return Forbid();
@@ -106,7 +106,7 @@ public class TasksController : ControllerBase
         if (task is null)
             return NotFound();
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task, Policies.ProjectMember);
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task.ProjectId, Policies.ProjectMember);
 
         if (!authorizationResult.Succeeded)
             return Forbid();
@@ -127,7 +127,7 @@ public class TasksController : ControllerBase
         if (task is null)
             return NotFound();
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task, Policies.ProjectMember);
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task.ProjectId, Policies.ProjectMember);
 
         if (!authorizationResult.Succeeded)
             return Forbid();
