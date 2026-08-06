@@ -33,7 +33,6 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             new(JwtRegisteredClaimNames.Name, user.Login.Value),
             new(JwtRegisteredClaimNames.Email, user.Email.Value),
             new(JwtClaimNames.Role, ((int)user.Role).ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer32),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
         var keyBytes = Encoding.UTF8.GetBytes(_options.SecretKey);
@@ -50,7 +49,6 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             expires: now.AddMinutes(_options.ExpirationMinutes),
             signingCredentials: signingCredentials);
 
-        return new JwtSecurityTokenHandler()
-            .WriteToken(token);
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
