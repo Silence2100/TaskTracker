@@ -23,13 +23,13 @@ public class ProjectRepository : IProjectRepository
             .ToListAsync();
     }
 
-    public async Task<List<Project>> GetAllForUserAsync(Guid userId)
+    public async Task<List<Project>> GetByMemberIdAsync(Guid memberId)
     {
         return await _context.Projects
             .AsNoTracking()
             .Include(project => project.Tasks)
             .Include(project => project.Members)
-            .Where(project => project.Members.Any(member => member.UserId == userId))
+            .Where(project => project.Members.Any(member => member.UserId == memberId))
             .OrderBy(project => project.Name)
             .ToListAsync();
     }

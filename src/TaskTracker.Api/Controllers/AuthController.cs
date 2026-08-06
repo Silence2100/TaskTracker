@@ -6,6 +6,7 @@ using System.Security.Claims;
 
 using TaskTracker.Application.Common;
 using TaskTracker.Application.DTOs.Auth;
+using TaskTracker.Application.DTOs.Users;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Domain.Enums;
 using TaskTracker.Domain.Common;
@@ -17,10 +18,12 @@ namespace TaskTracker.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IUserService _userService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IUserService userService)
     {
         _authService = authService;
+        _userService = userService;
     }
 
     [AllowAnonymous]
@@ -69,5 +72,28 @@ public class AuthController : ControllerBase
             Email = email,
             Role = role
         });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("register")]
+    public async Task<ActionResult<UserDto>> Register(RegisterUserDto dto)
+    {
+        try
+        {
+            var createdUser = await _userService.RegisterAsync(dto);
+
+            if (createdUser is null)
+                return Conflict("User with the same login or email already exists.");
+
+            return StatusCode(StatusCodes.Status201Created, createdUser);
+        }
+        catch (UserAlreadyExistsException exception)
+        {
+            return Conflict(exception.Message);
+        }
+        catch (DomainException exception)
+        {
+            return BadRequest(exception.Message);
+        }
     }
 }

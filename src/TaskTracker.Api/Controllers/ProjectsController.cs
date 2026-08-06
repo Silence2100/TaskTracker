@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using TaskTracker.Api.Authorization;
 using TaskTracker.Api.Extensions;
 using TaskTracker.Application.DTOs.Projects;
 using TaskTracker.Application.Interfaces;
@@ -13,22 +13,23 @@ namespace TaskTracker.Api.Controllers;
 public class ProjectsController : ControllerBase
 {
     private readonly IProjectService _projectService;
+    private readonly IAuthorizationService _authorizationService;
 
-    public ProjectsController(IProjectService projectService)
+    public ProjectsController(IProjectService projectService, IAuthorizationService authorizationService    )
     {
         _projectService = projectService;
+        _authorizationService = authorizationService;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<ProjectDto>>> GetAll()
     {
         var userId = User.GetUserId();
-        var role = User.GetUserRole();
 
-        if (userId is null || role is null)
+        if (userId is null)
             return Unauthorized();
 
-        var projects = await _projectService.GetAllAsync(userId.Value, role.Value);
+        var projects = await _projectService.GetByMemberIdAsync(userId.Value);
 
         return Ok(projects);
     }
@@ -36,16 +37,15 @@ public class ProjectsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProjectDto>> GetById(Guid id)
     {
-        var userId = User.GetUserId();
-        var role = User.GetUserRole();
-
-        if (userId is null || role is null)
-            return Unauthorized();
-
-        var project = await _projectService.GetByIdAsync(id, userId.Value, role.Value);
+        var project = await _projectService.GetByIdAsync(id);
 
         if (project is null)
             return NotFound();
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, id, Policies.ProjectMember);
+
+        if (!authorizationResult.Succeeded)
+            return Forbid();
 
         return Ok(project);
     }
@@ -53,16 +53,17 @@ public class ProjectsController : ControllerBase
     [HttpGet("{id:guid}/members")]
     public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid id)
     {
-        var userId = User.GetUserId();
-        var role = User.GetUserRole();
+        var project = await _projectService.GetByIdAsync(id);
 
-        if (userId is null || role is null)
-            return Unauthorized();
-
-        var members = await _projectService.GetMembersAsync(id, userId.Value, role.Value);
-
-        if (members is null)
+        if (project is null)
             return NotFound();
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, id, Policies.ProjectMember);
+
+        if (!authorizationResult.Succeeded)
+            return Forbid();
+
+        var members = await _projectService.GetMembersAsync(id);
 
         return Ok(members);
     }

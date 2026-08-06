@@ -9,45 +9,39 @@ namespace TaskTracker.Application.Services;
 public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
-    private readonly IProjectRepository _projectRepository;
 
-    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository)
+    public TaskService(ITaskRepository taskRepository)
     {
         _taskRepository = taskRepository;
-        _projectRepository = projectRepository;
     }
 
-    public async Task<List<TaskDto>> GetAllAsync(Guid currentUserId, UserRole currentUserRole)
+    public async Task<List<TaskDto>> GetAllAsync()
     {
-        var tasks = currentUserRole == UserRole.Admin
-            ? await _taskRepository.GetAllAsync()
-            : await _taskRepository.GetAllForUserAsync(currentUserId);
+        var tasks = await _taskRepository.GetAllAsync();
 
-        return tasks.Select(task => task.ToDto()).ToList();
+        return tasks
+            .Select(task => task.ToDto())
+            .ToList();
     }
 
-    public async Task<TaskDto?> GetByIdAsync(Guid id, Guid currentUserId, UserRole currentUserRole)
+    public async Task<List<TaskDto>> GetByProjectMemberIdAsync(Guid memberId)
+    {
+        var tasks = await _taskRepository.GetByProjectMemberIdAsync(memberId);
+
+        return tasks
+            .Select(task => task.ToDto())
+            .ToList();
+    }
+
+    public async Task<TaskDto?> GetByIdAsync(Guid id)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
-        if (task is null)
-            return null;
-
-        var canAccess = await CanAccessProjectAsync(task.ProjectId, currentUserId, currentUserRole);
-
-        if (!canAccess)
-            return null;
-
-        return task.ToDto();
+        return task?.ToDto();
     }
 
-    public async Task<TaskDto?> CreateAsync(CreateTaskDto dto, Guid authorId, UserRole currentUserRole)
+    public async Task<TaskDto?> CreateAsync(CreateTaskDto dto, Guid authorId)
     {
-        var canAccess = await CanAccessProjectAsync(dto.ProjectId, authorId, currentUserRole);
-
-        if (!canAccess)
-            return null;
-
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
@@ -69,16 +63,11 @@ public class TaskService : ITaskService
         return createdTask.ToDto();
     }
 
-    public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto, Guid currentUserId, UserRole currentUserRole)
+    public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
         if (task is null)
-            return false;
-
-        var canAccess = await CanAccessProjectAsync(task.ProjectId, currentUserId, currentUserRole);
-
-        if (!canAccess)
             return false;
 
         task.Title = dto.Title.Trim();
@@ -95,16 +84,11 @@ public class TaskService : ITaskService
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid id, Guid currentUserId, UserRole currentUserRole)
+    public async Task<bool> DeleteAsync(Guid id)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
         if (task is null)
-            return false;
-
-        var canAccess = await CanAccessProjectAsync(task.ProjectId, currentUserId, currentUserRole);
-
-        if (!canAccess)
             return false;
 
         await _taskRepository.DeleteAsync(task);
@@ -121,13 +105,5 @@ public class TaskService : ITaskService
             return DateTime.SpecifyKind(dateTime.Value, DateTimeKind.Utc);
 
         return dateTime.Value.ToUniversalTime();
-    }
-
-    private async Task<bool> CanAccessProjectAsync(Guid projectId, Guid userId, UserRole userRole)
-    {
-        if (userRole == UserRole.Admin)
-            return true;
-
-        return await _projectRepository.IsMemberAsync(projectId, userId);
     }
 }

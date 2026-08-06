@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using TaskTracker.Api.Authorization;
 using TaskTracker.Api.Extensions;
 using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
@@ -14,22 +15,25 @@ namespace TaskTracker.Api.Controllers;
 public class TasksController : ControllerBase
 {
     private readonly ITaskService _taskService;
+    private readonly IProjectService _projectService;
+    private readonly IAuthorizationService _authorizationService;
 
-    public TasksController(ITaskService taskService)
+    public TasksController(ITaskService taskService, IProjectService projectService, IAuthorizationService authorizationService)
     {
         _taskService = taskService;
+        _projectService = projectService;
+        _authorizationService = authorizationService;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<TaskDto>>> GetAll()
     {
         var userId = User.GetUserId();
-        var role = User.GetUserRole();
 
-        if (userId is null || role is null)
+        if (userId is null)
             return Unauthorized();
 
-        var tasks = await _taskService.GetAllAsync(userId.Value, role.Value);
+        var tasks = await _taskService.GetByProjectMemberIdAsync(userId.Value);
 
         return Ok(tasks);
     }
@@ -37,16 +41,15 @@ public class TasksController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<TaskDto>> GetById(Guid id)
     {
-        var userId = User.GetUserId();
-        var role = User.GetUserRole();
-
-        if (userId is null || role is null)
-            return Unauthorized();
-
-        var task = await _taskService.GetByIdAsync(id, userId.Value, role.Value);
+        var task = await _taskService.GetByIdAsync(id);
 
         if (task is null)
             return NotFound();
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task, Policies.ProjectMember);
+
+        if (!authorizationResult.Succeeded)
+            return Forbid();
 
         return Ok(task);
     }
@@ -64,19 +67,25 @@ public class TasksController : ControllerBase
             return BadRequest("Title is required.");
 
         var userId = User.GetUserId();
-        var role = User.GetUserRole();
 
-        if (userId is null || role is null)
+        if (userId is null)
             return Unauthorized();
 
-        var createdTask = await _taskService.CreateAsync(dto, userId.Value, role.Value);
+        var project = await _projectService.GetByIdAsync(dto.ProjectId);
 
-        if (createdTask is null)
+        if (project is null)
             return NotFound();
+
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, dto.ProjectId, Policies.ProjectMember);
+
+        if (!authorizationResult.Succeeded)
+            return Forbid();
+
+        var createdTask = await _taskService.CreateAsync(dto, userId.Value);
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = createdTask.Id },
+            new { id = createdTask!.Id },
             createdTask);
     }
 
@@ -92,13 +101,17 @@ public class TasksController : ControllerBase
         if (dto.AssignedUserId == Guid.Empty)
             return BadRequest("AssignedUserId is invalid.");
 
-        var userId = User.GetUserId();
-        var role = User.GetUserRole();
+        var task = await _taskService.GetByIdAsync(id);
 
-        if (userId is null || role is null)
-            return Unauthorized();
+        if (task is null)
+            return NotFound();
 
-        var isUpdated = await _taskService.UpdateAsync(id, dto, userId.Value, role.Value);
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task, Policies.ProjectMember);
+
+        if (!authorizationResult.Succeeded)
+            return Forbid();
+
+        var isUpdated = await _taskService.UpdateAsync(id, dto);
 
         if (!isUpdated)
             return NotFound();
@@ -109,13 +122,17 @@ public class TasksController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var userId = User.GetUserId();
-        var role = User.GetUserRole();
+        var task = await _taskService.GetByIdAsync(id);
 
-        if (userId is null || role is null)
-            return Unauthorized();
+        if (task is null)
+            return NotFound();
 
-        var isDeleted = await _taskService.DeleteAsync(id, userId.Value, role.Value);
+        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task, Policies.ProjectMember);
+
+        if (!authorizationResult.Succeeded)
+            return Forbid();
+
+        var isDeleted = await _taskService.DeleteAsync(id);
 
         if (!isDeleted)
             return NotFound();

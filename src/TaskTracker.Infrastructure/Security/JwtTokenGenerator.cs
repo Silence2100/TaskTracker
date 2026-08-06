@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -32,7 +31,7 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Name, user.Login.Value),
             new(JwtRegisteredClaimNames.Email, user.Email.Value),
-            new(JwtClaimNames.Role, ((int)user.Role).ToString(CultureInfo.InvariantCulture), ClaimValueTypes.Integer32),
+            new(JwtClaimNames.Role, user.Role.ToString()),
         };
 
         var keyBytes = Encoding.UTF8.GetBytes(_options.SecretKey);

@@ -2,10 +2,15 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
+using TaskTracker.Api.Authorization;
+using TaskTracker.Api.Authorization.Projects;
 using TaskTracker.Application;
+using TaskTracker.Application.Common;
+using TaskTracker.Domain.Enums;
 using TaskTracker.Infrastructure;
 using TaskTracker.Infrastructure.Security;
 
@@ -41,10 +46,26 @@ builder.Services
             ClockSkew = TimeSpan.Zero,
 
             NameClaimType = JwtRegisteredClaimNames.Name,
+            RoleClaimType = JwtClaimNames.Role
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(Policies.AdminPanel, policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireRole(nameof(UserRole.Admin));
+    });
+
+    options.AddPolicy(Policies.ProjectMember, policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.Requirements.Add(new ProjectMemberRequirement());
+    });
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, ProjectMemberHandler>();
 
 builder.Services.AddEndpointsApiExplorer();
 

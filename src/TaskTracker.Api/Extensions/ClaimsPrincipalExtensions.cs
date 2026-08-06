@@ -19,13 +19,6 @@ public static class ClaimsPrincipalExtensions
     {
         var roleValue = principal.FindFirstValue(JwtClaimNames.Role);
 
-        if (!int.TryParse(roleValue, out var value)) 
-        {
-            return null;
-        }
-        
-        var role = (UserRole)value;
-
-        return Enum.IsDefined(role) ? role : null;
+        return Enum.TryParse<UserRole>(roleValue, ignoreCase: true, out var role) ? role : null;
     }
 }

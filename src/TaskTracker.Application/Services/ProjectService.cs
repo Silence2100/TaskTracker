@@ -17,31 +17,29 @@ public class ProjectService : IProjectService
         _userRepository = userRepository;
     }
 
-    public async Task<List<ProjectDto>> GetAllAsync(Guid currentUserId, UserRole currentUserRole)
+    public async Task<List<ProjectDto>> GetAllAsync()
     {
-        var projects = currentUserRole == UserRole.Admin
-            ? await _projectRepository.GetAllAsync()
-            : await _projectRepository.GetAllForUserAsync(currentUserId);
+        var projects = await _projectRepository.GetAllAsync();
 
-        return projects.Select(project => project.ToDto()).ToList();
+        return projects
+            .Select(project => project.ToDto())
+            .ToList();
     }
 
-    public async Task<ProjectDto?> GetByIdAsync(Guid id, Guid currentUserId, UserRole currentUserRole)
+    public async Task<List<ProjectDto>> GetByMemberIdAsync(Guid memberId)
+    {
+        var projects = await _projectRepository.GetByMemberIdAsync(memberId);
+
+        return projects
+            .Select(project => project.ToDto())
+            .ToList();
+    }
+
+    public async Task<ProjectDto?> GetByIdAsync(Guid id)
     {
         var project = await _projectRepository.GetByIdAsync(id);
 
-        if (project is null)
-            return null;
-
-        if (currentUserRole != UserRole.Admin)
-        {
-            var isMember = await _projectRepository.IsMemberAsync(id, currentUserId);
-
-            if (!isMember)
-                return null;
-        }
-
-        return project.ToDto();
+        return project?.ToDto();
     }
 
     public async Task<ProjectDto?> CreateAsync(CreateProjectDto dto, Guid ownerUserId)
@@ -70,23 +68,17 @@ public class ProjectService : IProjectService
         return createdProject.ToDto();
     }
 
-    public async Task<List<ProjectMemberDto>?> GetMembersAsync(Guid projectId, Guid currentUserId, UserRole currentUserRole)
+    public async Task<List<ProjectMemberDto>?> GetMembersAsync(Guid projectId)
     {
         var project = await _projectRepository.GetByIdAsync(projectId);
 
         if (project is null)
             return null;
 
-        if (currentUserRole != UserRole.Admin)
-        {
-            var isMember = await _projectRepository.IsMemberAsync(projectId, currentUserId);
-
-            if (!isMember)
-                return null;
-        }
-
         var members = await _projectRepository.GetMembersAsync(projectId);
 
-        return members.Select(member => member.ToDto()).ToList();
+        return members
+            .Select(member => member.ToDto())
+            .ToList();
     }
 }
