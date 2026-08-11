@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
+using TaskTracker.Api.Authorization;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.DTOs.Auth;
 using TaskTracker.Application.DTOs.Users;
@@ -8,15 +10,14 @@ namespace TaskTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
-    private readonly IAuthService _authService;
 
-    public UsersController(IUserService userService, IAuthService authService)
+    public UsersController(IUserService userService)
     {
         _userService = userService;
-        _authService = authService;
     }
 
     [HttpGet]
@@ -38,6 +39,7 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
+    [AllowAnonymous]
     [HttpPost("Register")]
     public async Task<IActionResult> RegisterAsync(RegisterUserDto dto)
     {
@@ -49,17 +51,19 @@ public class UsersController : ControllerBase
         return Created();
     }
 
+    [AllowAnonymous]
     [HttpPost("Login")]
-    public async Task<IActionResult> LoginAsync(LoginUserDto dto)
+    public async Task<ActionResult<AuthResponseDto>> LoginAsync(LoginUserDto dto)
     {
-        var user = await _authService.LoginAsync(dto);
+        var result = await _userService.LoginAsync(dto);
 
-        if (user is null)
+        if (result is null)
             return Unauthorized();
 
-        return Ok();
+        return Ok(result);
     }
 
+    [Authorize(Policy = Policies.AdminPanel)]
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> UpdateAsync(Guid id, UpdateUserDto dto)
     {
@@ -71,6 +75,7 @@ public class UsersController : ControllerBase
         return Ok();
     }
 
+    [Authorize(Policy = Policies.AdminPanel)]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {

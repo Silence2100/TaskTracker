@@ -1,4 +1,5 @@
-﻿using TaskTracker.Application.DTOs.Users;
+﻿using TaskTracker.Application.DTOs.Auth;
+using TaskTracker.Application.DTOs.Users;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.Mappings;
 using TaskTracker.Domain.Entities;
@@ -10,11 +11,13 @@ public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IJwtTokenGenerator _jwtTokenGenerator;
 
-    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher, IJwtTokenGenerator jwtTokenGenerator)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _jwtTokenGenerator = jwtTokenGenerator;
     }
 
     public async Task<List<UserDto>> GetAllAsync()
@@ -52,6 +55,27 @@ public class UserService : IUserService
         await _userRepository.RegisterAsync(user);
 
         return user.ToDto();
+    }
+
+    public async Task<AuthResponseDto?> LoginAsync(LoginUserDto dto)
+    {
+        var login = Login.Create(dto.Login);
+
+        var user = await _userRepository.GetByLoginAsync(login);
+
+        if (user is null)
+            return null;
+
+        if (!_passwordHasher.Verify(user.PasswordHash, dto.Password))
+            return null;
+
+        var accessToken = _jwtTokenGenerator.Generate(user);
+
+        return new AuthResponseDto
+        {
+            AccessToken = accessToken,
+            User = user.ToDto()
+        };
     }
 
     public async Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto dto)
