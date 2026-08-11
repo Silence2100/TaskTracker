@@ -130,8 +130,8 @@ namespace TaskTracker.Infrastructure.Data.Migrations
 
                     b.Property<string>("Login")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
                         .HasColumnName("login");
 
                     b.Property<string>("Name")

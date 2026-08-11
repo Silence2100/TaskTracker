@@ -67,11 +67,19 @@ public class UserService : IUserService
         if (dto.Email is not null)
             user.UpdateEmail(Email.Create(dto.Email));
 
+        if (dto.Name is not null)
+            user.UpdateName(dto.Name);
+
         if (dto.Role is not null)
             user.UpdateRole(dto.Role.Value);
 
         await _userRepository.UpdateAsync(user);
 
         return user.ToDto();
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        return await _userRepository.DeleteAsync(id);
     }
 }

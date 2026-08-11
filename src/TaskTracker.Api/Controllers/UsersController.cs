@@ -20,7 +20,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserDto>>> GetAll()
+    public async Task<ActionResult<List<UserDto>>> GetAllAsync()
     {
         var users = await _userService.GetAllAsync();
 
@@ -28,7 +28,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<UserDto>> GetById(Guid id)
+    public async Task<ActionResult<UserDto>> GetByIdAsync(Guid id)
     {
         var user = await _userService.GetByIdAsync(id);
 
@@ -39,7 +39,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("Register")]
-    public async Task<IActionResult> Register(RegisterUserDto dto)
+    public async Task<IActionResult> RegisterAsync(RegisterUserDto dto)
     {
         var user = await _userService.RegisterAsync(dto);
 
@@ -50,7 +50,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("Login")]
-    public async Task<IActionResult> Login(LoginUserDto dto)
+    public async Task<IActionResult> LoginAsync(LoginUserDto dto)
     {
         var user = await _authService.LoginAsync(dto);
 
@@ -61,11 +61,22 @@ public class UsersController : ControllerBase
     }
 
     [HttpPatch("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, UpdateUserDto dto)
+    public async Task<IActionResult> UpdateAsync(Guid id, UpdateUserDto dto)
     {
         var user = await _userService.UpdateAsync(id, dto);
 
         if (user is null)
+            return NotFound();
+
+        return Ok();
+    }
+
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> DeleteAsync(Guid id)
+    {
+        var user = await _userService.DeleteAsync(id);
+
+        if (user == false)
             return NotFound();
 
         return Ok();

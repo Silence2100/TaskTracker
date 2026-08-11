@@ -12,8 +12,8 @@ public class User
     public Guid Id { get; private set; }
     public Login Login { get; private set; } = null!;
     public Email Email { get; private set; } = null!;
-    public string Name { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = string.Empty;
+    public string Name { get; private set; } = string.Empty;
     public UserRole Role { get; private set; }
 
     public List<ProjectMember> ProjectMembers { get; private set; } = new();
@@ -22,13 +22,13 @@ public class User
 
     private User() { }
 
-    private User(Guid id, Login login, Email email, string name, string passwordHash, UserRole role)
+    private User(Guid id, Login login, Email email, string passwordHash, string name, UserRole role)
     {
         Id = id;
         Login = login;
         Email = email;
-        Name = name;
         PasswordHash = passwordHash;
+        Name = name;
         Role = role;
     }
 
@@ -37,6 +37,13 @@ public class User
     {
         ArgumentNullException.ThrowIfNull(login);
         ArgumentNullException.ThrowIfNull(email);
+        ArgumentNullException.ThrowIfNull(name);
+
+        var normalizedName = NormalizeRequiredString(
+            name,
+            NameMaxLength,
+            "Name cannot be empty.",
+            $"Name cannot be longer than {NameMaxLength} characters.");
 
         var normalizedPasswordHash = NormalizeRequiredString(
             passwordHash,
@@ -44,7 +51,7 @@ public class User
             "Password hash cannot be empty.",
             $"Password hash cannot be longer than {PasswordMaxLength} characters.");
 
-        return new User(Guid.NewGuid(), login, email, name, normalizedPasswordHash, UserRole.User);
+        return new User(Guid.NewGuid(), login, email, normalizedPasswordHash, normalizedName, UserRole.User);
     }
 
     public void UpdateLogin(Login login)
@@ -60,6 +67,20 @@ public class User
 
         Email = email;
     }
+
+    public void UpdateName(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+
+        var normalizedName = NormalizeRequiredString(
+            name,
+            NameMaxLength,
+            "Name cannot be empty.",
+            $"Name cannot be longer than {NameMaxLength} characters.");
+
+        Name = normalizedName;
+    }
+
     public void UpdateRole(UserRole role)
     {
         if (!Enum.IsDefined(typeof(UserRole), role))

@@ -64,4 +64,18 @@ public class UserRepository : IUserRepository
     {
         await _context.SaveChangesAsync();
     }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var user = await GetByIdAsync(id);
+
+        if (user is null)
+            return false;
+
+        _context.Users.Remove(user);
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
 }
