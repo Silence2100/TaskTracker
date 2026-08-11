@@ -39,6 +39,12 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(user => user.Login == login);
     }
 
+    public async Task<bool> HasLoginAsync(Login login)
+    {
+        return await _context.Users
+            .AnyAsync(user => user.Login == login);
+    }
+
     public async Task<bool> HasEmailAsync(Email email)
     {
         return await _context.Users
@@ -47,31 +53,15 @@ public class UserRepository : IUserRepository
 
     public async Task RegisterAsync(User user)
     {
-        await _context.Users.AddAsync(user);
+        await _context.Users
+            .AddAsync(user);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException exception)
-            when (exception.InnerException is PostgresException
-            {
-                SqlState: PostgresErrorCodes.UniqueViolation,
-                ConstraintName: "ux_users_login"
-            })
-        {
-            throw new UserAlreadyExistsException(
-                "User with the same login already exists.");
-        }
-        catch (DbUpdateException exception)
-            when (exception.InnerException is PostgresException
-            {
-                SqlState: PostgresErrorCodes.UniqueViolation,
-                ConstraintName: "ux_users_email"
-            })
-        {
-            throw new UserAlreadyExistsException(
-                "User with the same email already exists.");
-        }
+        await _context
+            .SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(User user)
+    {
+        await _context.SaveChangesAsync();
     }
 }

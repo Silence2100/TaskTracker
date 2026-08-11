@@ -7,4 +7,5 @@ public interface IUserService
     Task<List<UserDto>> GetAllAsync();
     Task<UserDto?> GetByIdAsync(Guid id);
     Task<UserDto?> RegisterAsync(RegisterUserDto dto);
+    Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto dto);
 }

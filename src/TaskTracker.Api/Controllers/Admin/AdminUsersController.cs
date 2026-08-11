@@ -18,15 +18,15 @@ public class AdminUsersController : ControllerBase
         _userService = userService;
     }
 
-    [HttpGet]
+    /*[HttpGet]
     public async Task<ActionResult<List<UserDto>>> GetAll()
     {
         var users = await _userService.GetAllAsync();
 
         return Ok(users);
-    }
+    }*/
 
-    [HttpGet("{id:guid}")]
+    /*[HttpGet("{id:guid}")]
     public async Task<ActionResult<UserDto>> GetById(Guid id)
     {
         var user = await _userService.GetByIdAsync(id);
@@ -35,5 +35,5 @@ public class AdminUsersController : ControllerBase
             return NotFound();
 
         return Ok(user);
-    }
+    }*/
 }

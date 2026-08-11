@@ -5,8 +5,8 @@ namespace TaskTracker.Domain.ValueObjects;
 
 public sealed record Login
 {
-    public const int MaxLength = 100;
     public const int MinLength = 3;
+    public const int MaxLength = 30;
 
     private static readonly Regex LoginRegex = new(
         @"^[a-z0-9._-]+$",

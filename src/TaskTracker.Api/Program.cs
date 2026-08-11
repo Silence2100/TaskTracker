@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection.Metadata;
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -54,13 +55,11 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(Policies.AdminPanel, policy =>
     {
-        policy.RequireAuthenticatedUser();
         policy.RequireRole(nameof(UserRole.Admin));
     });
 
     options.AddPolicy(Policies.ProjectMember, policy =>
     {
-        policy.RequireAuthenticatedUser();
         policy.Requirements.Add(new ProjectMemberRequirement());
     });
 });

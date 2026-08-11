@@ -21,7 +21,9 @@ public class UserService : IUserService
     {
         var users = await _userRepository.GetAllAsync();
 
-        return users.Select(user => user.ToDto()).ToList();
+        return users
+            .Select(user => user.ToDto())
+            .ToList();
     }
 
     public async Task<UserDto?> GetByIdAsync(Guid id)
@@ -31,7 +33,8 @@ public class UserService : IUserService
         if (user is null)
             return null;
 
-        return user.ToDto();
+        return user
+            .ToDto();
     }
 
     public async Task<UserDto?> RegisterAsync(RegisterUserDto dto)
@@ -39,12 +42,7 @@ public class UserService : IUserService
         var login = Login.Create(dto.Login);
         var email = Email.Create(dto.Email);
 
-        var userWithSameLogin = await _userRepository.GetByLoginAsync(login);
-
-        if (userWithSameLogin is not null)
-            return null;
-
-        if (await _userRepository.HasEmailAsync(email))
+        if (await _userRepository.HasLoginAsync(login) || await _userRepository.HasEmailAsync(email))
             return null;
 
         var passwordHash = _passwordHasher.Hash(dto.Password);
@@ -52,6 +50,27 @@ public class UserService : IUserService
         var user = User.Register(login, email, passwordHash, dto.Name);
 
         await _userRepository.RegisterAsync(user);
+
+        return user.ToDto();
+    }
+
+    public async Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto dto)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+
+        if (user is null)
+            return null;
+
+        if (dto.Login is not null)
+            user.UpdateLogin(Login.Create(dto.Login));
+
+        if (dto.Email is not null)
+            user.UpdateEmail(Email.Create(dto.Email));
+
+        if (dto.Role is not null)
+            user.UpdateRole(dto.Role.Value);
+
+        await _userRepository.UpdateAsync(user);
 
         return user.ToDto();
     }

@@ -12,8 +12,8 @@ public class User
     public Guid Id { get; private set; }
     public Login Login { get; private set; } = null!;
     public Email Email { get; private set; } = null!;
-    public string PasswordHash { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
+    public string PasswordHash { get; private set; } = string.Empty;
     public UserRole Role { get; private set; }
 
     public List<ProjectMember> ProjectMembers { get; private set; } = new();
@@ -22,34 +22,21 @@ public class User
 
     private User() { }
 
-    private User(Guid id, Login login, Email email, string passwordHash, string name, UserRole role)
+    private User(Guid id, Login login, Email email, string name, string passwordHash, UserRole role)
     {
         Id = id;
         Login = login;
         Email = email;
-        PasswordHash = passwordHash;
         Name = name;
+        PasswordHash = passwordHash;
         Role = role;
     }
 
-    public void ChangeRole(UserRole role)
-    {
-        if (!Enum.IsDefined(typeof(UserRole), role))
-            throw new DomainException("Invalid user role.");
-
-        Role = role;
-    }
 
     public static User Register(Login login, Email email, string passwordHash, string name)
     {
         ArgumentNullException.ThrowIfNull(login);
         ArgumentNullException.ThrowIfNull(email);
-
-        var normalizedName = NormalizeRequiredString(
-            name,
-            NameMaxLength,
-            "Name cannot be empty.",
-            $"Name cannot be longer than {NameMaxLength} characters.");
 
         var normalizedPasswordHash = NormalizeRequiredString(
             passwordHash,
@@ -57,7 +44,28 @@ public class User
             "Password hash cannot be empty.",
             $"Password hash cannot be longer than {PasswordMaxLength} characters.");
 
-        return new User(Guid.NewGuid(), login, email, normalizedPasswordHash, normalizedName, UserRole.User);
+        return new User(Guid.NewGuid(), login, email, name, normalizedPasswordHash, UserRole.User);
+    }
+
+    public void UpdateLogin(Login login)
+    {
+        ArgumentNullException.ThrowIfNull(login);
+
+        Login = login;
+    }
+
+    public void UpdateEmail(Email email)
+    {
+        ArgumentNullException.ThrowIfNull(email);
+
+        Email = email;
+    }
+    public void UpdateRole(UserRole role)
+    {
+        if (!Enum.IsDefined(typeof(UserRole), role))
+            throw new DomainException("Invalid user role.");
+
+        Role = role;
     }
 
     private static string NormalizeRequiredString(string value, int maxLength, string emptyErrorMessage, string maxLengthErrorMessage)
