@@ -21,11 +21,11 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserDto>>> GetAllAsync()
+    public async Task<List<UserDto>> GetAllAsync()
     {
         var users = await _userService.GetAllAsync();
 
-        return Ok(users);
+        return users;
     }
 
     [HttpGet("{id:guid}")]
@@ -63,7 +63,7 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Policy = Policies.AdminPanel)]
+    [Authorize(Policy = Policies.Admin)]
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> UpdateAsync(Guid id, UpdateUserDto dto)
     {
@@ -75,7 +75,7 @@ public class UsersController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Policy = Policies.AdminPanel)]
+    [Authorize(Policy = Policies.Admin)]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {

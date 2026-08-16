@@ -44,7 +44,7 @@ public class ProjectService : IProjectService
 
     public async Task<ProjectDto?> CreateAsync(CreateProjectDto dto, Guid ownerUserId)
     {
-        var owner = await _userRepository.GetByIdAsync(ownerUserId);
+        var owner = await _userRepository.ReadByIdAsync(ownerUserId);
 
         if (owner is null)
             return null;

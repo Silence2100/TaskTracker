@@ -15,6 +15,7 @@ public class User
     public string PasswordHash { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public UserRole Role { get; private set; }
+    public bool IsBlock { get; private set; }
 
     public List<ProjectMember> ProjectMembers { get; private set; } = new();
     public List<TaskItem> AuthoredTasks { get; private set; } = new();
@@ -31,7 +32,6 @@ public class User
         Name = name;
         Role = role;
     }
-
 
     public static User Register(Login login, Email email, string passwordHash, string name)
     {
@@ -54,20 +54,6 @@ public class User
         return new User(Guid.NewGuid(), login, email, normalizedPasswordHash, normalizedName, UserRole.User);
     }
 
-    public void UpdateLogin(Login login)
-    {
-        ArgumentNullException.ThrowIfNull(login);
-
-        Login = login;
-    }
-
-    public void UpdateEmail(Email email)
-    {
-        ArgumentNullException.ThrowIfNull(email);
-
-        Email = email;
-    }
-
     public void UpdateName(string name)
     {
         ArgumentNullException.ThrowIfNull(name);
@@ -87,6 +73,11 @@ public class User
             throw new DomainException("Invalid user role.");
 
         Role = role;
+    }
+
+    public void Block(bool value)
+    {
+        IsBlock = value;
     }
 
     private static string NormalizeRequiredString(string value, int maxLength, string emptyErrorMessage, string maxLengthErrorMessage)

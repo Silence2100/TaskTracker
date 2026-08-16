@@ -6,6 +6,7 @@ namespace TaskTracker.Application.Interfaces;
 public interface IUserRepository
 {
     Task<List<User>> GetAllAsync();
+    Task<User?> ReadByIdAsync(Guid id);
     Task<User?> GetByIdAsync(Guid id);
     Task<User?> GetByLoginAsync(Login login);
     Task<bool> HasLoginAsync(Login login);

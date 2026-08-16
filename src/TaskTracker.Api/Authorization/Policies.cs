@@ -2,6 +2,5 @@
 
 public static class Policies
 {
-    public const string AdminPanel = nameof(AdminPanel);
-    public const string ProjectMember = nameof(ProjectMember);
+    public const string Admin = nameof(Admin);
 }

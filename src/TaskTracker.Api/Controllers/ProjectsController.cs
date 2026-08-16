@@ -13,14 +13,13 @@ namespace TaskTracker.Api.Controllers;
 public class ProjectsController : ControllerBase
 {
     private readonly IProjectService _projectService;
-    private readonly IAuthorizationService _authorizationService;
 
-    public ProjectsController(IProjectService projectService, IAuthorizationService authorizationService    )
+    public ProjectsController(IProjectService projectService)
     {
         _projectService = projectService;
-        _authorizationService = authorizationService;
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpGet]
     public async Task<ActionResult<List<ProjectDto>>> GetAll()
     {
@@ -34,6 +33,7 @@ public class ProjectsController : ControllerBase
         return Ok(projects);
     }
 
+    [Authorize(Policy = Policies.Admin)]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProjectDto>> GetById(Guid id)
     {
@@ -42,14 +42,10 @@ public class ProjectsController : ControllerBase
         if (project is null)
             return NotFound();
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, id, Policies.ProjectMember);
-
-        if (!authorizationResult.Succeeded)
-            return Forbid();
-
         return Ok(project);
     }
-
+    
+    [Authorize(Policy = Policies.Admin)]
     [HttpGet("{id:guid}/members")]
     public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid id)
     {
@@ -57,11 +53,6 @@ public class ProjectsController : ControllerBase
 
         if (project is null)
             return NotFound();
-
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, id, Policies.ProjectMember);
-
-        if (!authorizationResult.Succeeded)
-            return Forbid();
 
         var members = await _projectService.GetMembersAsync(id);
 
@@ -84,9 +75,6 @@ public class ProjectsController : ControllerBase
         if (createdProject is null)
             return Unauthorized();
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = createdProject.Id },
-            createdProject); 
+        return Ok();
     }
 }

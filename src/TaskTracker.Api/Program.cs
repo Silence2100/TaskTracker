@@ -1,14 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Reflection.Metadata;
 using System.Text;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 using TaskTracker.Api.Authorization;
-using TaskTracker.Api.Authorization.Projects;
 using TaskTracker.Application;
 using TaskTracker.Application.Common;
 using TaskTracker.Domain.Enums;
@@ -53,18 +50,11 @@ builder.Services
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(Policies.AdminPanel, policy =>
+    options.AddPolicy(Policies.Admin, policy =>
     {
         policy.RequireRole(nameof(UserRole.Admin));
     });
-
-    options.AddPolicy(Policies.ProjectMember, policy =>
-    {
-        policy.Requirements.Add(new ProjectMemberRequirement());
-    });
 });
-
-builder.Services.AddScoped<IAuthorizationHandler, ProjectMemberHandler>();
 
 builder.Services.AddEndpointsApiExplorer();
 

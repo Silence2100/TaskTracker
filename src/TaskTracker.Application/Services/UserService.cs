@@ -31,7 +31,7 @@ public class UserService : IUserService
 
     public async Task<UserDto?> GetByIdAsync(Guid id)
     {
-        var user = await _userRepository.GetByIdAsync(id);
+        var user = await _userRepository.ReadByIdAsync(id);
 
         if (user is null)
             return null;
@@ -85,17 +85,14 @@ public class UserService : IUserService
         if (user is null)
             return null;
 
-        if (dto.Login is not null)
-            user.UpdateLogin(Login.Create(dto.Login));
-
-        if (dto.Email is not null)
-            user.UpdateEmail(Email.Create(dto.Email));
-
         if (dto.Name is not null)
             user.UpdateName(dto.Name);
 
         if (dto.Role is not null)
             user.UpdateRole(dto.Role.Value);
+
+        if (dto.IsBlock is true)
+            user.Block(dto.IsBlock);
 
         await _userRepository.UpdateAsync(user);
 

@@ -69,6 +69,11 @@ public class AppDbContext : DbContext
                 .HasDefaultValue(UserRole.User)
                 .IsRequired();
 
+            entity.Property(user => user.IsBlock)
+                .HasColumnName("blocked")
+                .HasDefaultValue(false)
+                .IsRequired();
+
             entity.HasIndex(user => user.Login)
                 .IsUnique()
                 .HasDatabaseName("ux_users_login");

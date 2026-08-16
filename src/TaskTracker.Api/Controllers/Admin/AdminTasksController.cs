@@ -11,7 +11,7 @@ namespace TaskTracker.Api.Controllers.Admin;
 
 [ApiController]
 [Route("api/admin/tasks")]
-[Authorize(Policy = Policies.AdminPanel)]
+[Authorize(Policy = Policies.Admin)]
 public class AdminTasksController : ControllerBase
 {
     private readonly ITaskService _taskService;

@@ -25,9 +25,16 @@ public class UserRepository : IUserRepository
             .ToListAsync();
     }
 
+    public async Task<User?> ReadByIdAsync(Guid id)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(user => user.Id == id);
+    }
+
     public async Task<User?> GetByIdAsync(Guid id)
     {
         return await _context.Users
+            .AsNoTracking()
             .FirstOrDefaultAsync(user => user.Id == id);
     }
 
@@ -66,7 +73,7 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var user = await GetByIdAsync(id);
+        var user = await ReadByIdAsync(id);
 
         if (user is null)
             return false;
