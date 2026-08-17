@@ -1,4 +1,5 @@
-﻿using TaskTracker.Application.DTOs.Projects;
+﻿using TaskTracker.Application.Common;
+using TaskTracker.Application.DTOs.Projects;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.Mappings;
 using TaskTracker.Domain.Entities;
@@ -68,7 +69,7 @@ public class ProjectService : IProjectService
         return createdProject.ToDto();
     }
 
-    public async Task<List<ProjectMemberDto>?> GetMembersAsync(Guid projectId)
+    public async Task<List<ProjectMemberDto>?> GetMembersAndOwnerAsync(Guid projectId)
     {
         var project = await _projectRepository.GetByIdAsync(projectId);
 
@@ -80,5 +81,24 @@ public class ProjectService : IProjectService
         return members
             .Select(member => member.ToDto())
             .ToList();
+    }
+
+    public async Task<AccessResult?> GetAccessResult(Guid ownerUserId, Guid projectId)
+    {
+        var owner = await _projectRepository.GetProjectMember(ownerUserId, projectId);
+
+        if (owner is null)
+            return null;
+
+        if (owner.Role == ProjectRole.Owner)
+            return new AccessResult
+            {
+                OkMessage = "You are the project owner and can view the members."
+            };
+        else
+            return new AccessResult
+            {
+                ForbiddenMessage = "You are not the project owner and cannot view the members."
+            };
     }
 }

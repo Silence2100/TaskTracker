@@ -67,4 +67,11 @@ public class ProjectRepository : IProjectRepository
             .AsNoTracking()
             .AnyAsync(member => member.ProjectId == projectId && member.UserId == userId);
     }
+
+    public async Task<ProjectMember?> GetProjectMember(Guid userId, Guid projectId)
+    {
+        return await _context.ProjectMembers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(member => member.ProjectId == projectId && member.UserId == userId);
+    }
 }

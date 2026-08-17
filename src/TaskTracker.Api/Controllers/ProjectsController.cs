@@ -44,17 +44,17 @@ public class ProjectsController : ControllerBase
 
         return Ok(project);
     }
-    
+
     [Authorize(Policy = Policies.Admin)]
     [HttpGet("{id:guid}/members")]
-    public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid id)
+    public async Task<ActionResult<List<ProjectMemberDto>>> GetAllMembers(Guid id)
     {
         var project = await _projectService.GetByIdAsync(id);
 
         if (project is null)
             return NotFound();
 
-        var members = await _projectService.GetMembersAsync(id);
+        var members = await _projectService.GetMembersAndOwnerAsync(id);
 
         return Ok(members);
     }
@@ -76,5 +76,19 @@ public class ProjectsController : ControllerBase
             return Unauthorized();
 
         return Ok();
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid ownerId, Guid projectId)
+    {
+        var result = await _projectService.GetAccessResult(ownerId, projectId);
+
+        if (result is null)
+            return NotFound();
+
+        if (result.OkMessage is not null)
+            return Ok(await _projectService.GetMembersAndOwnerAsync(projectId));
+
+        return Forbid();
     }
 }

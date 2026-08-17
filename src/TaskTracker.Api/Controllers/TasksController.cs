@@ -46,11 +46,6 @@ public class TasksController : ControllerBase
         if (task is null)
             return NotFound();
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task.ProjectId, Policies.ProjectMember);
-
-        if (!authorizationResult.Succeeded)
-            return Forbid();
-
         return Ok(task);
     }
 
@@ -75,11 +70,6 @@ public class TasksController : ControllerBase
 
         if (project is null)
             return NotFound();
-
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, dto.ProjectId, Policies.ProjectMember);
-
-        if (!authorizationResult.Succeeded)
-            return Forbid();
 
         var createdTask = await _taskService.CreateAsync(dto, userId.Value);
 
@@ -106,11 +96,6 @@ public class TasksController : ControllerBase
         if (task is null)
             return NotFound();
 
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task.ProjectId, Policies.ProjectMember);
-
-        if (!authorizationResult.Succeeded)
-            return Forbid();
-
         var isUpdated = await _taskService.UpdateAsync(id, dto);
 
         if (!isUpdated)
@@ -126,11 +111,6 @@ public class TasksController : ControllerBase
 
         if (task is null)
             return NotFound();
-
-        var authorizationResult = await _authorizationService.AuthorizeAsync(User, task.ProjectId, Policies.ProjectMember);
-
-        if (!authorizationResult.Succeeded)
-            return Forbid();
 
         var isDeleted = await _taskService.DeleteAsync(id);
 
