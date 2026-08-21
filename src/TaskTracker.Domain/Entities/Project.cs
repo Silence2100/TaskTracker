@@ -4,6 +4,7 @@ public class Project
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
-    public List<TaskItem> Tasks { get; set; } = new();
-    public List<ProjectMember> Members { get; set; } = new();
+    public List<User> Users { get; set; } = [];
+    public List<TaskItem> Tasks { get; set; } = [];
+    public List<ProjectMember> Members { get; set; } = [];
 }

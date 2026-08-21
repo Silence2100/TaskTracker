@@ -17,9 +17,10 @@ public class User
     public UserRole Role { get; private set; }
     public bool IsBlock { get; private set; }
 
-    public List<ProjectMember> ProjectMembers { get; private set; } = new();
-    public List<TaskItem> AuthoredTasks { get; private set; } = new();
-    public List<TaskItem> AssignedTasks { get; private set; } = new();
+    public List<Project> Projects { get; private set; } = [];
+    public List<ProjectMember> ProjectMembers { get; private set; } = [];
+    public List<TaskItem> AuthoredTasks { get; private set; } = [];
+    public List<TaskItem> AssignedTasks { get; private set; } = [];
 
     private User() { }
 

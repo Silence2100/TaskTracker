@@ -100,6 +100,42 @@ public class AppDbContext : DbContext
                 .HasColumnName("name")
                 .HasMaxLength(200)
                 .IsRequired();
+
+            entity.HasMany(project => project.Users)
+                .WithMany(user => user.Projects)
+                .UsingEntity<ProjectMember>(
+                    right => right
+                        .HasOne<User>()
+                        .WithMany(user => user.ProjectMembers)
+                        .HasForeignKey(member => member.UserId)
+                        .OnDelete(DeleteBehavior.Cascade),
+
+                    left => left
+                        .HasOne<Project>()
+                        .WithMany(project => project.Members)
+                        .HasForeignKey(member => member.ProjectId)
+                        .OnDelete(DeleteBehavior.Cascade),
+
+                    join =>
+                    {
+                        join.ToTable("project_members");
+
+                        join.HasKey(member => new
+                        {
+                            member.UserId,
+                            member.ProjectId
+                        });
+
+                        join.Property(member => member.UserId)
+                            .HasColumnName("user_id");
+
+                        join.Property(member => member.ProjectId)
+                            .HasColumnName("project_id");
+
+                        join.Property(member => member.Role)
+                            .HasColumnName("role")
+                            .IsRequired();
+                    });
         });
     }
 
