@@ -8,8 +8,7 @@ namespace TaskTracker.Infrastructure.Data;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) 
-        : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Project> Projects => Set<Project>();
@@ -22,7 +21,6 @@ public class AppDbContext : DbContext
 
         ConfigureUsers(modelBuilder);
         ConfigureProjects(modelBuilder);
-        ConfigureProjectMembers(modelBuilder);
         ConfigureTasks(modelBuilder);
     }
 
@@ -101,18 +99,18 @@ public class AppDbContext : DbContext
                 .HasMaxLength(200)
                 .IsRequired();
 
-            entity.HasMany(project => project.Users)
-                .WithMany(user => user.Projects)
+            entity.HasMany<User>()
+                .WithMany()
                 .UsingEntity<ProjectMember>(
                     right => right
                         .HasOne<User>()
-                        .WithMany(user => user.ProjectMembers)
+                        .WithMany()
                         .HasForeignKey(member => member.UserId)
                         .OnDelete(DeleteBehavior.Cascade),
 
                     left => left
                         .HasOne<Project>()
-                        .WithMany(project => project.Members)
+                        .WithMany()
                         .HasForeignKey(member => member.ProjectId)
                         .OnDelete(DeleteBehavior.Cascade),
 
@@ -120,11 +118,12 @@ public class AppDbContext : DbContext
                     {
                         join.ToTable("project_members");
 
-                        join.HasKey(member => new
+                        join.HasIndex(member => new
                         {
                             member.UserId,
                             member.ProjectId
-                        });
+                        })
+                        .IsUnique();
 
                         join.Property(member => member.UserId)
                             .HasColumnName("user_id");
@@ -139,40 +138,6 @@ public class AppDbContext : DbContext
         });
     }
 
-    private static void ConfigureProjectMembers(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<ProjectMember>(entity =>
-        {
-            entity.ToTable("project_members");
-
-            entity.HasKey(member => new 
-            {
-                member.UserId,
-                member.ProjectId
-            });
-
-            entity.Property(member => member.UserId)
-                .HasColumnName("user_id");
-
-            entity.Property(member => member.ProjectId)
-                .HasColumnName("project_id");
-
-            entity.Property(member => member.Role)
-                .HasColumnName("role")
-                .IsRequired();
-
-            entity.HasOne(member => member.User)
-                .WithMany(user => user.ProjectMembers)
-                .HasForeignKey(member => member.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(member => member.Project)
-                .WithMany(project => project.Members)
-                .HasForeignKey(member => member.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-    }
-
     private static void ConfigureTasks(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TaskItem>(entity =>
@@ -184,10 +149,6 @@ public class AppDbContext : DbContext
             entity.Property(task => task.Id)
                 .HasColumnName("id")
                 .ValueGeneratedNever();
-
-            entity.Property(task => task.ProjectId)
-                .HasColumnName("project_id")
-                .IsRequired();
 
             entity.Property(task => task.Title)
                 .HasColumnName("title")
@@ -219,18 +180,13 @@ public class AppDbContext : DbContext
             entity.Property(task => task.UpdateAt)
                 .HasColumnName("updated_at");
 
-            entity.HasOne(task => task.Project)
-                .WithMany(project => project.Tasks)
-                .HasForeignKey(task => task.ProjectId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(task => task.Author)
-                .WithMany(user => user.AuthoredTasks)
+            entity.HasOne<User>()
+                .WithMany()
                 .HasForeignKey(task => task.AuthorId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(task => task.AssignedUser)
-                .WithMany(user => user.AssignedTasks)
+            entity.HasOne<User>()
+                .WithMany()
                 .HasForeignKey(task => task.AssignedUserId)
                 .OnDelete(DeleteBehavior.SetNull);
         });

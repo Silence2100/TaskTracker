@@ -17,11 +17,6 @@ public class User
     public UserRole Role { get; private set; }
     public bool IsBlock { get; private set; }
 
-    public List<Project> Projects { get; private set; } = [];
-    public List<ProjectMember> ProjectMembers { get; private set; } = [];
-    public List<TaskItem> AuthoredTasks { get; private set; } = [];
-    public List<TaskItem> AssignedTasks { get; private set; } = [];
-
     private User() { }
 
     private User(Guid id, Login login, Email email, string passwordHash, string name, UserRole role)
