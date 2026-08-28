@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TaskTracker.Api.Authorization;
 using TaskTracker.Api.Extensions;
+using TaskTracker.Application.Common;
 using TaskTracker.Application.DTOs.Projects;
 using TaskTracker.Application.Interfaces;
 
@@ -19,25 +20,20 @@ public class ProjectsController : ControllerBase
         _projectService = projectService;
     }
 
-    [Authorize(Policy = Policies.Admin)]
     [HttpGet]
+    [Authorize(Policy = Policies.Admin)]
     public async Task<ActionResult<List<ProjectDto>>> GetAll()
     {
-        var userId = User.GetUserId();
-
-        if (userId is null)
-            return Unauthorized();
-
-        var projects = await _projectService.GetByMemberIdAsync(userId.Value);
+        var projects = await _projectService.GetAllAsync();
 
         return Ok(projects);
     }
 
-    [Authorize(Policy = Policies.Admin)]
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ProjectDto>> GetById(Guid id)
+    [Authorize(Policy = Policies.Admin)]
+    public async Task<ActionResult<ProjectDto>> GetById(Guid projectId)
     {
-        var project = await _projectService.GetByIdAsync(id);
+        var project = await _projectService.GetByIdAsync(projectId);
 
         if (project is null)
             return NotFound();
@@ -45,18 +41,23 @@ public class ProjectsController : ControllerBase
         return Ok(project);
     }
 
-    [Authorize(Policy = Policies.Admin)]
     [HttpGet("{id:guid}/members")]
-    public async Task<ActionResult<List<ProjectMemberDto>>> GetAllMembers(Guid id)
+    public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid projectId)
     {
-        var project = await _projectService.GetByIdAsync(id);
+        var userId = User.GetUserId();
 
-        if (project is null)
+        if (userId is null)
             return NotFound();
 
-        var members = await _projectService.GetMembersAndOwnerAsync(id);
+        var result = await _projectService.GetMembers(userId, projectId);
 
-        return Ok(members);
+        if (result.ProjectId is null)
+            return NotFound();
+
+        if (!result.CanGetMembers)
+            return Unauthorized();
+
+        return Ok(result.Members);
     }
 
     [HttpPost]
@@ -76,19 +77,5 @@ public class ProjectsController : ControllerBase
             return Unauthorized();
 
         return Ok();
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid ownerId, Guid projectId)
-    {
-        var result = await _projectService.GetAccessResult(ownerId, projectId);
-
-        if (result is null)
-            return NotFound();
-
-        if (result.OkMessage is not null)
-            return Ok(await _projectService.GetMembersAndOwnerAsync(projectId));
-
-        return Forbid();
     }
 }

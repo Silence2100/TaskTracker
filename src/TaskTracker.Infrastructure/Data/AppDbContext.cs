@@ -91,8 +91,7 @@ public class AppDbContext : DbContext
             entity.HasKey(project => project.Id);
 
             entity.Property(project => project.Id)
-                .HasColumnName("id")
-                .ValueGeneratedNever();
+                .HasColumnName("id");
 
             entity.Property(project => project.Name)
                 .HasColumnName("name")
@@ -110,7 +109,7 @@ public class AppDbContext : DbContext
 
                     left => left
                         .HasOne<Project>()
-                        .WithMany()
+                        .WithMany(project => project.Members)
                         .HasForeignKey(member => member.ProjectId)
                         .OnDelete(DeleteBehavior.Cascade),
 

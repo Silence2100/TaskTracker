@@ -1,4 +1,5 @@
 ﻿using TaskTracker.Domain.Entities;
+using TaskTracker.Domain.Enums;
 
 namespace TaskTracker.Application.Interfaces;
 
@@ -11,4 +12,5 @@ public interface IProjectRepository
     Task<List<ProjectMember>> GetMembersAsync(Guid projectId);
     Task<bool> IsMemberAsync(Guid projectId, Guid userId);
     Task<ProjectMember?> GetProjectMember(Guid userId, Guid projectId);
+    Task<ProjectRole> GetUserRoleAsync(Guid userId, Guid projectId);
 }

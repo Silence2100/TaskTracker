@@ -10,8 +10,6 @@ public static class ProjectMemberMapper
         return new ProjectMemberDto
         {
             UserId = member.UserId,
-            UserName = member.User.Name,
-            UserEmail = member.User.Email.Value,
             Role = member.Role
         };
     }

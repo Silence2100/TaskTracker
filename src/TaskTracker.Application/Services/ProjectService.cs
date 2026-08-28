@@ -27,6 +27,38 @@ public class ProjectService : IProjectService
             .ToList();
     }
 
+    public async Task<ProjectDto?> GetByIdAsync(Guid id)
+    {
+        var project = await _projectRepository.GetByIdAsync(id);
+
+        return project?.ToDto();
+    }
+
+    public async Task<MembersResult> GetMembers(Guid userId, Guid projectId)
+    {
+        MembersResult result = new();
+
+        var project = await _projectRepository.GetByIdAsync(projectId);
+
+        if (project is null)
+        {
+            result.ProjectId = null;
+
+            return result;
+        }
+
+        if (project.TryGetMembers(userId, out var members) == false)
+        {
+            result.CanGetMembers = false;
+
+            return result;
+        }
+
+        result.Members = members.Select(member => member.ToDto()).ToList();
+
+        return result;
+    }
+
     public async Task<List<ProjectDto>> GetByMemberIdAsync(Guid memberId)
     {
         var projects = await _projectRepository.GetByMemberIdAsync(memberId);
@@ -34,13 +66,6 @@ public class ProjectService : IProjectService
         return projects
             .Select(project => project.ToDto())
             .ToList();
-    }
-
-    public async Task<ProjectDto?> GetByIdAsync(Guid id)
-    {
-        var project = await _projectRepository.GetByIdAsync(id);
-
-        return project?.ToDto();
     }
 
     public async Task<ProjectDto?> CreateAsync(CreateProjectDto dto, Guid ownerUserId)
@@ -67,38 +92,5 @@ public class ProjectService : IProjectService
         var createdProject = await _projectRepository.CreateAsync(project);
 
         return createdProject.ToDto();
-    }
-
-    public async Task<List<ProjectMemberDto>?> GetMembersAndOwnerAsync(Guid projectId)
-    {
-        var project = await _projectRepository.GetByIdAsync(projectId);
-
-        if (project is null)
-            return null;
-
-        var members = await _projectRepository.GetMembersAsync(projectId);
-
-        return members
-            .Select(member => member.ToDto())
-            .ToList();
-    }
-
-    public async Task<AccessResult?> GetAccessResult(Guid ownerUserId, Guid projectId)
-    {
-        var owner = await _projectRepository.GetProjectMember(ownerUserId, projectId);
-
-        if (owner is null)
-            return null;
-
-        if (owner.Role == ProjectRole.Owner)
-            return new AccessResult
-            {
-                OkMessage = "You are the project owner and can view the members."
-            };
-        else
-            return new AccessResult
-            {
-                ForbiddenMessage = "You are not the project owner and cannot view the members."
-            };
     }
 }

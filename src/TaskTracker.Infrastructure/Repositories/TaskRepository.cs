@@ -18,9 +18,6 @@ public class TaskRepository : ITaskRepository
     {
         return await _context.Tasks
             .AsNoTracking()
-            .Include(task => task.Project)
-            .Include(task => task.Author)
-            .Include(task => task.AssignedUser)
             .OrderByDescending(task => task.CreatedAt)
             .ToListAsync();
     }
@@ -29,10 +26,6 @@ public class TaskRepository : ITaskRepository
     {
         return await _context.Tasks
             .AsNoTracking()
-            .Include(task => task.Project)
-            .Include(task => task.Author)
-            .Include(task => task.AssignedUser)
-            .Where(task => task.Project.Members.Any(member => member.UserId == memberId))
             .OrderByDescending(task => task.CreatedAt)
             .ToListAsync();
     }
@@ -40,9 +33,6 @@ public class TaskRepository : ITaskRepository
     public async Task<TaskItem?> GetByIdAsync(Guid id)
     {
         return await _context.Tasks
-            .Include(task => task.Project)
-            .Include(task => task.Author)
-            .Include(task => task.AssignedUser)
             .FirstOrDefaultAsync(task => task.Id == id);
     }
 

@@ -39,8 +39,8 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
-    [AllowAnonymous]
     [HttpPost("Register")]
+    [AllowAnonymous]
     public async Task<IActionResult> RegisterAsync(RegisterUserDto dto)
     {
         var user = await _userService.RegisterAsync(dto);
@@ -51,8 +51,8 @@ public class UsersController : ControllerBase
         return Created();
     }
 
-    [AllowAnonymous]
     [HttpPost("Login")]
+    [AllowAnonymous]
     public async Task<ActionResult<AuthResponseDto>> LoginAsync(LoginUserDto dto)
     {
         var result = await _userService.LoginAsync(dto);
@@ -63,8 +63,8 @@ public class UsersController : ControllerBase
         return Ok(result);
     }
 
-    [Authorize(Policy = Policies.Admin)]
     [HttpPatch("{id:guid}")]
+    [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> UpdateAsync(Guid id, UpdateUserDto dto)
     {
         var user = await _userService.UpdateAsync(id, dto);
@@ -75,8 +75,8 @@ public class UsersController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Policy = Policies.Admin)]
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
         var user = await _userService.DeleteAsync(id);

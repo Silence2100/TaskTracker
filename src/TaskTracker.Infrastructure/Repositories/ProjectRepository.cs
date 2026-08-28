@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+
 using TaskTracker.Application.Interfaces;
+using TaskTracker.Domain.Enums;
 using TaskTracker.Domain.Entities;
 using TaskTracker.Infrastructure.Data;
 
@@ -55,9 +57,7 @@ public class ProjectRepository : IProjectRepository
     {
         return await _context.ProjectMembers
             .AsNoTracking()
-            .Include(member => member.User)
             .Where(member => member.ProjectId == projectId)
-            .OrderBy(member => member.User.Name)
             .ToListAsync();
     }
 
@@ -73,5 +73,14 @@ public class ProjectRepository : IProjectRepository
         return await _context.ProjectMembers
             .AsNoTracking()
             .FirstOrDefaultAsync(member => member.ProjectId == projectId && member.UserId == userId);
+    }
+
+    public async Task<ProjectRole> GetUserRoleAsync(Guid userId, Guid projectId)
+    {
+        var member = await _context.ProjectMembers
+            .AsNoTracking()
+            .FirstAsync(member => member.ProjectId == projectId && member.UserId == userId);
+
+        return member.Role;
     }
 }

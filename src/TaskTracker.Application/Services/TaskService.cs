@@ -45,7 +45,6 @@ public class TaskService : ITaskService
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
-            ProjectId = dto.ProjectId,
             Title = dto.Title.Trim(),
             Description = string.IsNullOrWhiteSpace(dto.Description)
                 ? null
