@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using TaskTracker.Api.Authorization;
 using TaskTracker.Api.Extensions;
-using TaskTracker.Application.Common;
 using TaskTracker.Application.DTOs.Projects;
 using TaskTracker.Application.Interfaces;
 
@@ -66,16 +66,16 @@ public class ProjectsController : ControllerBase
         if (string.IsNullOrWhiteSpace(dto.Name))
             return BadRequest("Project name is required.");
 
-        var ownerUserId = User.GetUserId();
+        var userId = User.GetUserId();
 
-        if (ownerUserId is null)
+        if (userId is null)
             return Unauthorized();
 
-        var createdProject = await _projectService.CreateAsync(dto, ownerUserId.Value);
+        var result = await _projectService.CreateAsync(dto, userId.Value);
 
-        if (createdProject is null)
+        if (!result.CanCreateProject)
             return Unauthorized();
 
-        return Ok();
+        return Ok(result.Project);
     }
 }

@@ -9,7 +9,7 @@ public class Project
     public List<TaskItem> Tasks { get; set; } = [];
     public List<ProjectMember> Members { get; set; } = [];
 
-    public bool TryGetMembers(Guid userId, out List<ProjectMember> members)
+    public bool TryGetMembers(Guid? userId, out List<ProjectMember> members)
     {
         var user = Members.FirstOrDefault(member => member.UserId == userId);
 

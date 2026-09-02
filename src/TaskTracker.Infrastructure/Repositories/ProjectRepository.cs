@@ -83,4 +83,11 @@ public class ProjectRepository : IProjectRepository
 
         return member.Role;
     }
+
+    public async Task<bool> HasOwnerRoleAsync(Guid userId)
+    {
+        return await _context.ProjectMembers
+            .AsNoTracking()
+            .AnyAsync(member => member.UserId == userId && member.Role == ProjectRole.Owner);
+    }
 }

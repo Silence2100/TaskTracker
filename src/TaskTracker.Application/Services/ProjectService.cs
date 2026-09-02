@@ -34,7 +34,7 @@ public class ProjectService : IProjectService
         return project?.ToDto();
     }
 
-    public async Task<MembersResult> GetMembers(Guid userId, Guid projectId)
+    public async Task<MembersResult> GetMembers(Guid? userId, Guid projectId)
     {
         MembersResult result = new();
 
@@ -68,29 +68,47 @@ public class ProjectService : IProjectService
             .ToList();
     }
 
-    public async Task<ProjectDto?> CreateAsync(CreateProjectDto dto, Guid ownerUserId)
+    public async Task<CreateProjectResult> CreateAsync(CreateProjectDto dto, Guid userId)
     {
-        var owner = await _userRepository.ReadByIdAsync(ownerUserId);
+        CreateProjectResult result = new();
+
+        var canCreateProject = await _projectRepository.HasOwnerRoleAsync(userId);
+
+        if (!canCreateProject)
+        {
+            result.CanCreateProject = false;
+
+            return result;
+        }
+
+        var owner = await _userRepository.ReadByIdAsync(userId);
 
         if (owner is null)
-            return null;
+        {
+            result.CanCreateProject = false;
+
+            return result;
+        }
 
         var project = new Project
         {
             Id = Guid.NewGuid(),
             Name = dto.Name.Trim(),
-            Members = new List<ProjectMember>
-            {
-                new()
+            Members =
+            [
+                new ProjectMember
                 {
-                    UserId = ownerUserId,
+                    UserId = userId,
                     Role = ProjectRole.Owner
                 }
-            }
+            ]
         };
 
         var createdProject = await _projectRepository.CreateAsync(project);
 
-        return createdProject.ToDto();
+        result.CanCreateProject = true;
+        result.Project = createdProject.ToDto();
+
+        return result;
     }
 }

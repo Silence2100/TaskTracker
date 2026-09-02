@@ -9,5 +9,5 @@ public interface IProjectService
     Task<ProjectDto?> GetByIdAsync(Guid id);
     Task<MembersResult> GetMembers(Guid? userId, Guid projectId);
     Task<List<ProjectDto>> GetByMemberIdAsync(Guid memberId);
-    Task<ProjectDto?> CreateAsync(CreateProjectDto dto, Guid ownerUserId);
+    Task<CreateProjectResult> CreateAsync(CreateProjectDto dto, Guid userId);
 }
