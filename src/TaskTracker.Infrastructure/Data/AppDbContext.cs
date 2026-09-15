@@ -134,6 +134,11 @@ public class AppDbContext : DbContext
                             .HasColumnName("role")
                             .IsRequired();
                     });
+
+            entity.HasMany(project => project.Tasks)
+                .WithOne()
+                .HasForeignKey("ProjectId")
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
@@ -188,6 +193,10 @@ public class AppDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(task => task.AssignedUserId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            entity.Property<Guid>("ProjectId")
+                .HasColumnName("project_id")
+                .IsRequired();
         });
     }
 }

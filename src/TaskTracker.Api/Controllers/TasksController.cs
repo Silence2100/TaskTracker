@@ -50,33 +50,34 @@ public class TasksController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TaskDto>> Create(CreateTaskDto dto)
+    public async Task<ActionResult<TaskDto>> Create(Guid projectId, CreateTaskDto dto)
     {
-        if (dto.ProjectId == Guid.Empty)
-            return BadRequest("ProjectId is required.");
+        if (string.IsNullOrWhiteSpace(dto.Title))
+            return BadRequest("Title is required.");
 
         if (dto.AssignedUserId == Guid.Empty)
             return BadRequest("AssignedUserId is invalid.");
-
-        if (string.IsNullOrWhiteSpace(dto.Title))
-            return BadRequest("Title is required.");
 
         var userId = User.GetUserId();
 
         if (userId is null)
             return Unauthorized();
 
-        var project = await _projectService.GetByIdAsync(dto.ProjectId);
+        var result = await _taskService.CreateAsync(projectId, dto, userId.Value);
 
-        if (project is null)
+        if (!result.ProjectExists)
             return NotFound();
 
-        var createdTask = await _taskService.CreateAsync(dto, userId.Value);
+        if (!result.AuthorIsProjectMember)
+            return Forbid();
+
+        if (!result.AssigneeIsProjectMember)
+            return BadRequest("Assigned user is not a member of the project.");
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = createdTask!.Id },
-            createdTask);
+            new { id = result.Task!.Id },
+            result.Task);
     }
 
     [HttpPut("{id:guid}")]

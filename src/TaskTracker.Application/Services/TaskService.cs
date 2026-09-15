@@ -1,4 +1,5 @@
-﻿using TaskTracker.Application.DTOs.Tasks;
+﻿using TaskTracker.Application.Common;
+using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.Mappings;
 using TaskTracker.Domain.Entities;
@@ -9,10 +10,12 @@ namespace TaskTracker.Application.Services;
 public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
+    private readonly IProjectRepository _projectRepository;
 
-    public TaskService(ITaskRepository taskRepository)
+    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository)
     {
         _taskRepository = taskRepository;
+        _projectRepository = projectRepository;
     }
 
     public async Task<List<TaskDto>> GetAllAsync()
@@ -40,8 +43,36 @@ public class TaskService : ITaskService
         return task?.ToDto();
     }
 
-    public async Task<TaskDto?> CreateAsync(CreateTaskDto dto, Guid authorId)
+    public async Task<CreateTaskResult> CreateAsync(Guid projectId, CreateTaskDto dto, Guid authorId)
     {
+        var result = new CreateTaskResult();
+
+        var project = await _projectRepository.GetByIdAsync(projectId);
+
+        if (project is null)
+            return result;
+
+        result.ProjectExists = true;
+
+        var isAuthorMember = await _projectRepository.IsMemberAsync(projectId, authorId);
+
+        if (!isAuthorMember)
+            return result;
+
+        result.AuthorIsProjectMember = true;
+
+        if (dto.AssignedUserId is not null)
+        {
+            var isAssigneeMember = await _projectRepository.IsMemberAsync(projectId, dto.AssignedUserId.Value);
+
+            if (!isAssigneeMember)
+            {
+                result.AssigneeIsProjectMember = false;
+
+                return result;
+            }
+        }
+
         var task = new TaskItem
         {
             Id = Guid.NewGuid(),
@@ -53,13 +84,14 @@ public class TaskService : ITaskService
             Status = TaskItemStatus.Todo,
             AssignedUserId = dto.AssignedUserId,
             AuthorId = authorId,
-            CreatedAt = DateTime.UtcNow,
-            UpdateAt = null
+            CreatedAt = DateTime.UtcNow
         };
 
-        var createdTask = await _taskRepository.CreateAsync(task);
+        var createdTask = await _taskRepository.CreateAsync(projectId, task);
 
-        return createdTask.ToDto();
+        result.Task = createdTask.ToDto();
+
+        return result;
     }
 
     public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto)

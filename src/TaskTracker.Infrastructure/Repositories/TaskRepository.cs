@@ -36,12 +36,15 @@ public class TaskRepository : ITaskRepository
             .FirstOrDefaultAsync(task => task.Id == id);
     }
 
-    public async Task<TaskItem> CreateAsync(TaskItem task)
+    public async Task<TaskItem> CreateAsync(Guid projectId, TaskItem task)
     {
-        await _context.Tasks.AddAsync(task);
+        var entry = await _context.Tasks.AddAsync(task);
+
+        entry.Property("ProjectId").CurrentValue = projectId;
+
         await _context.SaveChangesAsync();
 
-        return await GetByIdAsync(task.Id) ?? task;
+        return task;
     }
 
     public async Task UpdateAsync(TaskItem task)
