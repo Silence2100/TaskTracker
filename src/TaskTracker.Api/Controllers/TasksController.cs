@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using TaskTracker.Api.Authorization;
 using TaskTracker.Api.Extensions;
 using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
