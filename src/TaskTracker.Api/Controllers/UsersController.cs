@@ -39,6 +39,8 @@ public class UsersController: ControllerBase
         if (user is null)
             return NotFound();
 
+        _logger.LogInformation("Retrieved user with ID {UserId}", id);
+
         return Ok(user);
     }
 
