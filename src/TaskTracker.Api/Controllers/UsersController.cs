@@ -1,29 +1,32 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
 using TaskTracker.Api.Authorization;
-using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.DTOs.Auth;
 using TaskTracker.Application.DTOs.Users;
+using TaskTracker.Application.Interfaces;
 
 namespace TaskTracker.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UsersController : ControllerBase
+public class UsersController: ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, ILogger<UsersController> logger)
     {
         _userService = userService;
+        _logger = logger;
     }
 
     [HttpGet]
     public async Task<List<UserDto>> GetAllAsync()
     {
         var users = await _userService.GetAllAsync();
+
+        _logger.LogInformation("Retrieved {Count} users", users.Count);
 
         return users;
     }
