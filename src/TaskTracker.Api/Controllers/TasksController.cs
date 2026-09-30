@@ -64,19 +64,15 @@ public class TasksController : ControllerBase
 
         var result = await _taskService.CreateAsync(projectId, dto, userId.Value);
 
-        if (!result.ProjectExists)
-            return NotFound();
-
-        if (!result.AuthorIsProjectMember)
-            return Forbid();
-
-        if (!result.AssigneeIsProjectMember)
-            return BadRequest("Assigned user is not a member of the project.");
+        if (result.IsFailure)
+        {
+            return result.Error.ToActionResult(this);
+        }
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = result.Task!.Id },
-            result.Task);
+            new { id = result.Value.Id },
+            result.Value);
     }
 
     [HttpPut("{id:guid}")]

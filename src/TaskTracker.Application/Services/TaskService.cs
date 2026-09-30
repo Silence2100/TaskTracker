@@ -1,4 +1,5 @@
 ﻿using TaskTracker.Application.Common;
+using TaskTracker.Application.Common.Errors;
 using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.Mappings;
@@ -43,23 +44,21 @@ public class TaskService : ITaskService
         return task?.ToDto();
     }
 
-    public async Task<CreateTaskResult> CreateAsync(Guid projectId, CreateTaskDto dto, Guid authorId)
+    public async Task<Result<TaskDto>> CreateAsync(Guid projectId, CreateTaskDto dto, Guid authorId)
     {
-        var result = new CreateTaskResult();
-
         var project = await _projectRepository.GetByIdAsync(projectId);
 
         if (project is null)
-            return result;
-
-        result.ProjectExists = true;
+        {
+            return Result<TaskDto>.Failure(ProjectErrors.NotFound);
+        }
 
         var isAuthorMember = await _projectRepository.IsMemberAsync(projectId, authorId);
 
         if (!isAuthorMember)
-            return result;
-
-        result.AuthorIsProjectMember = true;
+        {
+            return Result<TaskDto>.Failure(TaskErrors.AuthorNotProjectMember);
+        }
 
         if (dto.AssignedUserId is not null)
         {
@@ -67,9 +66,7 @@ public class TaskService : ITaskService
 
             if (!isAssigneeMember)
             {
-                result.AssigneeIsProjectMember = false;
-
-                return result;
+                return Result<TaskDto>.Failure(TaskErrors.AssigneeNotProjectMember);
             }
         }
 
@@ -89,9 +86,7 @@ public class TaskService : ITaskService
 
         var createdTask = await _taskRepository.CreateAsync(projectId, task);
 
-        result.Task = createdTask.ToDto();
-
-        return result;
+        return Result<TaskDto>.Success(createdTask.ToDto());
     }
 
     public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto)
