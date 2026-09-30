@@ -1,10 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Text;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using TaskTracker.Api.Authorization;
 using TaskTracker.Application;
 using TaskTracker.Application.Common;
@@ -14,6 +12,7 @@ using TaskTracker.Infrastructure.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddLogging();
 builder.Services.AddControllers();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
