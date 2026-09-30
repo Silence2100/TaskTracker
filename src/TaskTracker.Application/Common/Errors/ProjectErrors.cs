@@ -6,4 +6,9 @@ public static class ProjectErrors
         "Project.NotFound",
         "Project was not found.",
         ErrorType.NotFound);
+
+    public static readonly Error CreationNotAllowed = new(
+        "Project.CreationNotAllowed",
+        "User is not allowed to create a project.",
+        ErrorType.Authorization);
 }

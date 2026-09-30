@@ -73,9 +73,11 @@ public class ProjectsController : ControllerBase
 
         var result = await _projectService.CreateAsync(dto, userId.Value);
 
-        if (!result.CanCreateProject)
-            return Unauthorized();
+        if (result.IsFailure)
+        {
+            return result.Error.ToActionResult(this);
+        }
 
-        return Ok(result.Project);
+        return Ok(result.Value);
     }
 }

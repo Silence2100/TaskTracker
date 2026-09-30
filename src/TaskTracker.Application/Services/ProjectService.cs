@@ -1,4 +1,5 @@
 ﻿using TaskTracker.Application.Common;
+using TaskTracker.Application.Common.Errors;
 using TaskTracker.Application.DTOs.Projects;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.Mappings;
@@ -68,26 +69,20 @@ public class ProjectService : IProjectService
             .ToList();
     }
 
-    public async Task<CreateProjectResult> CreateAsync(CreateProjectDto dto, Guid userId)
+    public async Task<Result<ProjectDto>> CreateAsync(CreateProjectDto dto, Guid userId)
     {
-        CreateProjectResult result = new();
-
         var canCreateProject = await _projectRepository.HasOwnerRoleAsync(userId);
 
         if (!canCreateProject)
         {
-            result.CanCreateProject = false;
-
-            return result;
+            return Result<ProjectDto>.Failure(ProjectErrors.CreationNotAllowed);
         }
 
         var owner = await _userRepository.ReadByIdAsync(userId);
 
         if (owner is null)
         {
-            result.CanCreateProject = false;
-
-            return result;
+            return Result<ProjectDto>.Failure(ProjectErrors.CreationNotAllowed);
         }
 
         var project = new Project
@@ -97,18 +92,15 @@ public class ProjectService : IProjectService
             Members =
             [
                 new ProjectMember
-                {
-                    UserId = userId,
-                    Role = ProjectRole.Owner
-                }
+            {
+                UserId = userId,
+                Role = ProjectRole.Owner
+            }
             ]
         };
 
         var createdProject = await _projectRepository.CreateAsync(project);
 
-        result.CanCreateProject = true;
-        result.Project = createdProject.ToDto();
-
-        return result;
+        return Result<ProjectDto>.Success(createdProject.ToDto());
     }
 }
