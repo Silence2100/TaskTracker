@@ -35,29 +35,21 @@ public class ProjectService : IProjectService
         return project?.ToDto();
     }
 
-    public async Task<MembersResult> GetMembers(Guid? userId, Guid projectId)
+    public async Task<Result<List<ProjectMemberDto>>> GetMembers(Guid userId, Guid projectId)
     {
-        MembersResult result = new();
-
         var project = await _projectRepository.GetByIdAsync(projectId);
 
         if (project is null)
-        {
-            result.ProjectId = null;
+            return Result<List<ProjectMemberDto>>.Failure(ProjectErrors.NotFound);
 
-            return result;
-        }
+        if (!project.TryGetMembers(userId, out var members))
+            return Result<List<ProjectMemberDto>>.Failure(ProjectErrors.MembersAccessDenied);
 
-        if (project.TryGetMembers(userId, out var members) == false)
-        {
-            result.CanGetMembers = false;
+        var memberDtos = members
+            .Select(member => member.ToDto())
+            .ToList();
 
-            return result;
-        }
-
-        result.Members = members.Select(member => member.ToDto()).ToList();
-
-        return result;
+        return Result<List<ProjectMemberDto>>.Success(memberDtos);
     }
 
     public async Task<List<ProjectDto>> GetByMemberIdAsync(Guid memberId)

@@ -11,4 +11,9 @@ public static class ProjectErrors
         "Project.CreationNotAllowed",
         "User is not allowed to create a project.",
         ErrorType.Authorization);
+
+    public static readonly Error MembersAccessDenied = new(
+        "Project.MembersAccessDenied",
+        "User is not allowed to view project members.",
+        ErrorType.Authorization);
 }

@@ -29,7 +29,7 @@ public class ProjectsController : ControllerBase
         return Ok(projects);
     }
 
-    [HttpGet("{id:guid}")]
+    [HttpGet("{projectId:guid}")]
     [Authorize(Policy = Policies.Admin)]
     public async Task<ActionResult<ProjectDto>> GetById(Guid projectId)
     {
@@ -41,23 +41,20 @@ public class ProjectsController : ControllerBase
         return Ok(project);
     }
 
-    [HttpGet("{id:guid}/members")]
+    [HttpGet("{projectId:guid}/members")]
     public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid projectId)
     {
         var userId = User.GetUserId();
 
         if (userId is null)
-            return NotFound();
-
-        var result = await _projectService.GetMembers(userId, projectId);
-
-        if (result.ProjectId is null)
-            return NotFound();
-
-        if (!result.CanGetMembers)
             return Unauthorized();
 
-        return Ok(result.Members);
+        var result = await _projectService.GetMembers(userId.Value, projectId);
+
+        if (result.IsFailure)
+            return result.Error.ToActionResult(this);
+
+        return Ok(result.Value);
     }
 
     [HttpPost]
@@ -78,6 +75,9 @@ public class ProjectsController : ControllerBase
             return result.Error.ToActionResult(this);
         }
 
-        return Ok(result.Value);
+        return CreatedAtAction(
+            nameof(GetById),
+            new { projectId = result.Value.Id },
+            result.Value);
     }
 }
