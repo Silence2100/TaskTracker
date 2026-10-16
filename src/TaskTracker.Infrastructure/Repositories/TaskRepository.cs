@@ -26,6 +26,9 @@ public class TaskRepository : ITaskRepository
     {
         return await _context.Tasks
             .AsNoTracking()
+            .Where(task => _context.ProjectMembers.Any(member =>
+                member.ProjectId == EF.Property<Guid>(task, "ProjectId") &&
+                member.UserId == memberId))
             .OrderByDescending(task => task.CreatedAt)
             .ToListAsync();
     }
