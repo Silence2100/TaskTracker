@@ -61,7 +61,7 @@ public class ProjectRepository : IProjectRepository
             .ToListAsync();
     }
 
-    public async Task<bool> IsMemberAsync(Guid projectId, Guid userId)
+    public async Task<bool> IsMemberAsync(Guid projectId, Guid? userId)
     {
         return await _context.ProjectMembers
             .AsNoTracking()

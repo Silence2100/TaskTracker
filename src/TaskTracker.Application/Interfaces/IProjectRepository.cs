@@ -15,7 +15,7 @@ public interface IProjectRepository
 
     Task<List<ProjectMember>> GetMembersAsync(Guid projectId);
 
-    Task<bool> IsMemberAsync(Guid projectId, Guid userId);
+    Task<bool> IsMemberAsync(Guid projectId, Guid? userId);
 
     Task<ProjectMember?> GetProjectMember(Guid userId, Guid projectId);
 

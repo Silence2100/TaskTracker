@@ -12,5 +12,5 @@ public interface ITaskService
     Task<Result<TaskDto>> CreateAsync(Guid projectId, CreateTaskDto dto, Guid authorId);
     Task<bool> UpdateAsync(int id, UpdateTaskDto dto);
     Task<bool> DeleteAsync(int id);
-    Task<IReadOnlyList<TaskItem>?> GetByProjectAsync(Guid projectId, Guid userId);
+    Task<IReadOnlyList<TaskItem>?> GetByProjectAsync(Guid projectId, Guid? userId);
 }

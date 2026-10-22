@@ -132,7 +132,7 @@ public class TaskService : ITaskService
         return dateTime.Value.ToUniversalTime();
     }
 
-    public async Task<IReadOnlyList<TaskItem>?> GetByProjectAsync(Guid projectId, Guid userId)
+    public async Task<IReadOnlyList<TaskItem>?> GetByProjectAsync(Guid projectId, Guid? userId)
     {
         var isMember = await _projectRepository.IsMemberAsync(projectId, userId);
 

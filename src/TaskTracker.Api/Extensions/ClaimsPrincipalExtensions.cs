@@ -5,10 +5,10 @@ namespace TaskTracker.Api.Extensions;
 
 public static class ClaimsPrincipalExtensions
 {
-    public static Guid GetUserId(this ClaimsPrincipal principal)
+    public static Guid? GetUserId(this ClaimsPrincipal principal)
     {
         var userIdValue = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-        return Guid.TryParse(userIdValue, out var userId) ? userId : Guid.Empty;
+        return Guid.TryParse(userIdValue, out var userId) ? userId : null;
     }
 }
