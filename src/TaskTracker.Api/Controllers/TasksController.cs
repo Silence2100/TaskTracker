@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using System.Security.Claims;
+
 using TaskTracker.Api.Extensions;
 using TaskTracker.Application.DTOs.Tasks;
 using TaskTracker.Application.Interfaces;
@@ -37,8 +39,8 @@ public class TasksController : ControllerBase
         return Ok(tasks);
     }
 
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<TaskDto>> GetById(Guid id)
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<TaskDto>> GetById(int id)
     {
         var task = await _taskService.GetByIdAsync(id);
 
@@ -75,8 +77,8 @@ public class TasksController : ControllerBase
             result.Value);
     }
 
-    [HttpPut("{id:guid}")]
-    public async Task<IActionResult> Update(Guid id, UpdateTaskDto dto)
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, UpdateTaskDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Title))
             return BadRequest("Title is required.");
@@ -100,8 +102,8 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
     {
         var task = await _taskService.GetByIdAsync(id);
 
@@ -114,5 +116,18 @@ public class TasksController : ControllerBase
             return NotFound();
 
         return NoContent();
+    }
+
+    [HttpGet("projects/{projectId:guid}/tasks")]
+    public async Task<IActionResult> GetByProject([FromRoute] Guid projectId)
+    {
+        var userId = User.GetUserId();
+
+        var tasks = await _taskService.GetByProjectAsync(projectId, userId);
+
+        if (tasks is null)
+            return NotFound();
+
+        return Ok(tasks);
     }
 }

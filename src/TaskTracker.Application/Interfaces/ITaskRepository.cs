@@ -6,9 +6,10 @@ public interface ITaskRepository
 {
     Task<List<TaskItem>> GetAllAsync();
     Task<List<TaskItem>> GetByProjectMemberIdAsync(Guid memberId);
-    Task<TaskItem?> GetByIdAsync(Guid id);
+    Task<TaskItem?> GetByIdAsync(int taskId);
     Task<TaskItem> CreateAsync(Guid projectId, TaskItem task);
     Task UpdateAsync(TaskItem task);
     Task DeleteAsync(TaskItem task);
-    Task<TaskItem?> GetAccessibleByIdAsync(Guid taskId, Guid userId);
+    Task<TaskItem?> GetAccessibleByIdAsync(int taskId, Guid userId);
+    Task<List<TaskItem>> GetByProjectIdAsync(Guid projectId);
 }

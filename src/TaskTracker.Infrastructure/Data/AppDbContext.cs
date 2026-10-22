@@ -137,7 +137,7 @@ public class AppDbContext : DbContext
 
             entity.HasMany(project => project.Tasks)
                 .WithOne()
-                .HasForeignKey("ProjectId")
+                .HasForeignKey(task => task.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
@@ -152,7 +152,7 @@ public class AppDbContext : DbContext
 
             entity.Property(task => task.Id)
                 .HasColumnName("id")
-                .ValueGeneratedNever();
+                .ValueGeneratedOnAdd();
 
             entity.Property(task => task.Title)
                 .HasColumnName("title")
@@ -194,7 +194,7 @@ public class AppDbContext : DbContext
                 .HasForeignKey(task => task.AssignedUserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            entity.Property<Guid>("ProjectId")
+            entity.Property(task => task.ProjectId)
                 .HasColumnName("project_id")
                 .IsRequired();
         });

@@ -33,7 +33,7 @@ public class TaskRepository : ITaskRepository
             .ToListAsync();
     }
 
-    public async Task<TaskItem?> GetByIdAsync(Guid id)
+    public async Task<TaskItem?> GetByIdAsync(int id)
     {
         return await _context.Tasks
             .FirstOrDefaultAsync(task => task.Id == id);
@@ -41,9 +41,9 @@ public class TaskRepository : ITaskRepository
 
     public async Task<TaskItem> CreateAsync(Guid projectId, TaskItem task)
     {
-        var entry = await _context.Tasks.AddAsync(task);
+        task.ProjectId = projectId;
 
-        entry.Property("ProjectId").CurrentValue = projectId;
+        await _context.Tasks.AddAsync(task);
 
         await _context.SaveChangesAsync();
 
@@ -62,12 +62,21 @@ public class TaskRepository : ITaskRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<TaskItem?> GetAccessibleByIdAsync(Guid taskId, Guid userId)
+    public async Task<TaskItem?> GetAccessibleByIdAsync(int taskId, Guid userId)
     {
         return await _context.Tasks
             .AsNoTracking()
             .FirstOrDefaultAsync(task => task.Id == taskId && _context.ProjectMembers.Any(member =>
-                    member.ProjectId == EF.Property<Guid>(task, "ProjectId") &&
+                    member.ProjectId == task.ProjectId &&
                     member.UserId == userId));
+    }
+
+    public async Task<List<TaskItem>> GetByProjectIdAsync(Guid projectId)
+    {
+        return await _context.Tasks
+            .AsNoTracking()
+            .Where(task => task.ProjectId == projectId)
+            .OrderByDescending(task => task.CreatedAt)
+            .ToListAsync();
     }
 }

@@ -37,7 +37,7 @@ public class TaskService : ITaskService
             .ToList();
     }
 
-    public async Task<TaskDto?> GetByIdAsync(Guid id)
+    public async Task<TaskDto?> GetByIdAsync(int id)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
@@ -72,7 +72,6 @@ public class TaskService : ITaskService
 
         var task = new TaskItem
         {
-            Id = Guid.NewGuid(),
             Title = dto.Title.Trim(),
             Description = string.IsNullOrWhiteSpace(dto.Description)
                 ? null
@@ -89,7 +88,7 @@ public class TaskService : ITaskService
         return Result<TaskDto>.Success(createdTask.ToDto());
     }
 
-    public async Task<bool> UpdateAsync(Guid id, UpdateTaskDto dto)
+    public async Task<bool> UpdateAsync(int id, UpdateTaskDto dto)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
@@ -110,7 +109,7 @@ public class TaskService : ITaskService
         return true;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(int id)
     {
         var task = await _taskRepository.GetByIdAsync(id);
 
@@ -131,5 +130,17 @@ public class TaskService : ITaskService
             return DateTime.SpecifyKind(dateTime.Value, DateTimeKind.Utc);
 
         return dateTime.Value.ToUniversalTime();
+    }
+
+    public async Task<IReadOnlyList<TaskItem>?> GetByProjectAsync(Guid projectId, Guid userId)
+    {
+        var isMember = await _projectRepository.IsMemberAsync(projectId, userId);
+
+        if (!isMember)
+            return null;
+
+        var tasks = await _taskRepository.GetByProjectIdAsync(projectId);
+
+        return tasks;
     }
 }
