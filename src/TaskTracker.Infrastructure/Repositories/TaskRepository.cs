@@ -61,4 +61,13 @@ public class TaskRepository : ITaskRepository
 
         await _context.SaveChangesAsync();
     }
+
+    public async Task<TaskItem?> GetAccessibleByIdAsync(Guid taskId, Guid userId)
+    {
+        return await _context.Tasks
+            .AsNoTracking()
+            .FirstOrDefaultAsync(task => task.Id == taskId && _context.ProjectMembers.Any(member =>
+                    member.ProjectId == EF.Property<Guid>(task, "ProjectId") &&
+                    member.UserId == userId));
+    }
 }

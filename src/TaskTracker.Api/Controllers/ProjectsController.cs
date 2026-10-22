@@ -71,9 +71,7 @@ public class ProjectsController : ControllerBase
         var result = await _projectService.CreateAsync(dto, userId.Value);
 
         if (result.IsFailure)
-        {
             return result.Error.ToActionResult(this);
-        }
 
         return CreatedAtAction(
             nameof(GetById),
