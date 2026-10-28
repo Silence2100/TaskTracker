@@ -11,11 +11,16 @@ namespace TaskTracker.Application.Services;
 public class ProjectService : IProjectService
 {
     private readonly IProjectRepository _projectRepository;
+    private readonly IMemberRepository _memberRepository;
     private readonly IUserRepository _userRepository;
 
-    public ProjectService(IProjectRepository projectRepository, IUserRepository userRepository)
+    public ProjectService(
+        IProjectRepository projectRepository,
+        IMemberRepository memberRepository,
+        IUserRepository userRepository)
     {
         _projectRepository = projectRepository;
+        _memberRepository = memberRepository;
         _userRepository = userRepository;
     }
 
@@ -42,8 +47,12 @@ public class ProjectService : IProjectService
         if (project is null)
             return Result<List<ProjectMemberDto>>.Failure(ProjectErrors.NotFound);
 
-        if (!project.TryGetMembers(userId, out var members))
+        var role = await _memberRepository.GetRoleAsync(projectId, userId);
+
+        if (role != ProjectRole.Owner)
             return Result<List<ProjectMemberDto>>.Failure(ProjectErrors.MembersAccessDenied);
+
+        var members = await _memberRepository.GetByProjectIdAsync(projectId);
 
         var memberDtos = members
             .Select(member => member.ToDto())
@@ -63,19 +72,15 @@ public class ProjectService : IProjectService
 
     public async Task<Result<ProjectDto>> CreateAsync(CreateProjectDto dto, Guid userId)
     {
-        var canCreateProject = await _projectRepository.HasOwnerRoleAsync(userId);
+        var canCreateProject = await _memberRepository.HasOwnerRoleAsync(userId);
 
         if (!canCreateProject)
-        {
             return Result<ProjectDto>.Failure(ProjectErrors.CreationNotAllowed);
-        }
 
         var owner = await _userRepository.ReadByIdAsync(userId);
 
         if (owner is null)
-        {
             return Result<ProjectDto>.Failure(ProjectErrors.CreationNotAllowed);
-        }
 
         var project = new Project
         {
@@ -84,10 +89,10 @@ public class ProjectService : IProjectService
             Members =
             [
                 new ProjectMember
-            {
-                UserId = userId,
-                Role = ProjectRole.Owner
-            }
+                {
+                    UserId = userId,
+                    Role = ProjectRole.Owner
+                }
             ]
         };
 

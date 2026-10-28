@@ -31,13 +31,16 @@ public class MemberRepository : IMemberRepository
                 member.UserId == userId);
     }
 
-    public async Task<bool> IsMemberAsync(Guid projectId, Guid userId)
+    public async Task<bool> IsMemberAsync(Guid projectId, Guid? userId)
     {
+        if (userId is null)
+            return false;
+
         return await _context.ProjectMembers
             .AsNoTracking()
             .AnyAsync(member =>
                 member.ProjectId == projectId &&
-                member.UserId == userId);
+                member.UserId == userId.Value);
     }
 
     public async Task<ProjectRole?> GetRoleAsync(Guid projectId, Guid userId)

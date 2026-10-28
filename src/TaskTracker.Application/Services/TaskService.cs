@@ -12,11 +12,13 @@ public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
     private readonly IProjectRepository _projectRepository;
+    private readonly IMemberRepository _memberRepository;
 
-    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository)
+    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository, IMemberRepository memberRepository)
     {
         _taskRepository = taskRepository;
         _projectRepository = projectRepository;
+        _memberRepository = memberRepository;
     }
 
     public async Task<List<TaskDto>> GetAllAsync()
@@ -49,25 +51,19 @@ public class TaskService : ITaskService
         var project = await _projectRepository.GetByIdAsync(projectId);
 
         if (project is null)
-        {
             return Result<TaskDto>.Failure(ProjectErrors.NotFound);
-        }
 
-        var isAuthorMember = await _projectRepository.IsMemberAsync(projectId, authorId);
+        var isAuthorMember = await _memberRepository.IsMemberAsync(projectId, authorId);
 
         if (!isAuthorMember)
-        {
             return Result<TaskDto>.Failure(TaskErrors.AuthorNotProjectMember);
-        }
 
         if (dto.AssignedUserId is not null)
         {
-            var isAssigneeMember = await _projectRepository.IsMemberAsync(projectId, dto.AssignedUserId.Value);
+            var isAssigneeMember = await _memberRepository.IsMemberAsync(projectId, dto.AssignedUserId.Value);
 
             if (!isAssigneeMember)
-            {
                 return Result<TaskDto>.Failure(TaskErrors.AssigneeNotProjectMember);
-            }
         }
 
         var task = new TaskItem
@@ -121,6 +117,18 @@ public class TaskService : ITaskService
         return true;
     }
 
+    public async Task<IReadOnlyList<TaskItem>?> GetByProjectAsync(Guid projectId, Guid? userId)
+    {
+        var isMember = await _memberRepository.IsMemberAsync(projectId, userId);
+
+        if (!isMember)
+            return null;
+
+        var tasks = await _taskRepository.GetByProjectIdAsync(projectId);
+
+        return tasks;
+    }
+
     private static DateTime? NormalizeDateTime(DateTime? dateTime)
     {
         if (dateTime is null)
@@ -130,17 +138,5 @@ public class TaskService : ITaskService
             return DateTime.SpecifyKind(dateTime.Value, DateTimeKind.Utc);
 
         return dateTime.Value.ToUniversalTime();
-    }
-
-    public async Task<IReadOnlyList<TaskItem>?> GetByProjectAsync(Guid projectId, Guid? userId)
-    {
-        var isMember = await _projectRepository.IsMemberAsync(projectId, userId);
-
-        if (!isMember)
-            return null;
-
-        var tasks = await _taskRepository.GetByProjectIdAsync(projectId);
-
-        return tasks;
     }
 }

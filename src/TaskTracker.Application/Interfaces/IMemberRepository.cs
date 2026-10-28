@@ -9,7 +9,7 @@ public interface IMemberRepository
 
     Task<ProjectMember?> GetAsync(Guid projectId, Guid userId);
 
-    Task<bool> IsMemberAsync(Guid projectId, Guid userId);
+    Task<bool> IsMemberAsync(Guid projectId, Guid? userId);
 
     Task<ProjectRole?> GetRoleAsync(Guid projectId, Guid userId);
 
