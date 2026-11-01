@@ -6,13 +6,13 @@ public interface IProjectRepository
 {
     Task<List<Project>> GetAllAsync();
 
-    Task<List<Project>> GetByMemberIdAsync(Guid memberId);
-
     Task<Project?> GetByIdAsync(Guid id);
 
     Task<Project?> GetForUpdateAsync(Guid id);
 
     Task<Project> CreateAsync(Project project);
+
+    Task<bool> DeleteAsync(Guid id);
 
     Task SaveChangesAsync();
 }

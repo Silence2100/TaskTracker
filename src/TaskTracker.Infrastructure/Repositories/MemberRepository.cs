@@ -54,15 +54,6 @@ public class MemberRepository : IMemberRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<bool> HasOwnerRoleAsync(Guid userId)
-    {
-        return await _context.ProjectMembers
-            .AsNoTracking()
-            .AnyAsync(member =>
-                member.UserId == userId &&
-                member.Role == ProjectRole.Owner);
-    }
-
     public async Task AddAsync(ProjectMember member)
     {
         await _context.ProjectMembers.AddAsync(member);

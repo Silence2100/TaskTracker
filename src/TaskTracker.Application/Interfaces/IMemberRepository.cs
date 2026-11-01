@@ -13,8 +13,6 @@ public interface IMemberRepository
 
     Task<ProjectRole?> GetRoleAsync(Guid projectId, Guid userId);
 
-    Task<bool> HasOwnerRoleAsync(Guid userId);
-
     Task AddAsync(ProjectMember member);
 
     Task UpdateAsync(ProjectMember member);

@@ -76,19 +76,17 @@ public class Project
         return task;
     }
 
-    public bool TryGetMembers(Guid? userId, out List<ProjectMember> members)
+    public void UnassignTasksFromUser(Guid userId)
     {
-        var user = Members.FirstOrDefault(member => member.UserId == userId);
+        var now = DateTime.UtcNow;
 
-        if (user is null || user.Role != ProjectRole.Owner)
+        foreach (var task in Tasks)
         {
-            members = [];
+            if (task.AssignedUserId != userId)
+                continue;
 
-            return false;
+            task.AssignedUserId = null;
+            task.UpdateAt = now;
         }
-
-        members = [.. Members];
-
-        return true;
     }
 }

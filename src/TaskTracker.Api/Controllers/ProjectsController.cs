@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
 using TaskTracker.Api.Authorization;
 using TaskTracker.Api.Extensions;
 using TaskTracker.Application.DTOs.Projects;
@@ -9,8 +8,8 @@ using TaskTracker.Application.Interfaces;
 namespace TaskTracker.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
 [Authorize]
+[Route("api/projects")]
 public class ProjectsController : ControllerBase
 {
     private readonly IProjectService _projectService;
@@ -41,28 +40,9 @@ public class ProjectsController : ControllerBase
         return Ok(project);
     }
 
-    [HttpGet("{projectId:guid}/members")]
-    public async Task<ActionResult<List<ProjectMemberDto>>> GetMembers(Guid projectId)
-    {
-        var userId = User.GetUserId();
-
-        if (userId is null)
-            return Unauthorized();
-
-        var result = await _projectService.GetMembers(userId.Value, projectId);
-
-        if (result.IsFailure)
-            return result.Error.ToActionResult(this);
-
-        return Ok(result.Value);
-    }
-
     [HttpPost]
-    public async Task<ActionResult<ProjectDto>> Create(CreateProjectDto dto)
+    public async Task<ActionResult<ProjectDto>> Create([FromBody] CreateProjectDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Name))
-            return BadRequest("Project name is required.");
-
         var userId = User.GetUserId();
 
         if (userId is null)
@@ -77,5 +57,21 @@ public class ProjectsController : ControllerBase
             nameof(GetById),
             new { projectId = result.Value.Id },
             result.Value);
+    }
+
+    [HttpDelete("{projectId:guid}")]
+    public async Task<IActionResult> Delete(Guid projectId)
+    {
+        var userId = User.GetUserId();
+
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _projectService.DeleteAsync(projectId, userId.Value);
+
+        if (result.IsFailure)
+            return result.Error.ToActionResult(this);
+
+        return NoContent();
     }
 }

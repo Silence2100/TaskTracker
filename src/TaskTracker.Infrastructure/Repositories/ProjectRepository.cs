@@ -24,18 +24,6 @@ public class ProjectRepository : IProjectRepository
             .ToListAsync();
     }
 
-    public async Task<List<Project>> GetByMemberIdAsync(Guid memberId)
-    {
-        return await _context.Projects
-            .AsNoTracking()
-            .Include(project => project.Tasks)
-            .Include(project => project.Members)
-            .Where(project => project.Members
-                .Any(member => member.UserId == memberId))
-            .OrderBy(project => project.Name)
-            .ToListAsync();
-    }
-
     public async Task<Project?> GetByIdAsync(Guid id)
     {
         return await _context.Projects
@@ -58,6 +46,20 @@ public class ProjectRepository : IProjectRepository
         await _context.SaveChangesAsync();
 
         return await GetByIdAsync(project.Id) ?? project;
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var project = await _context.Projects.FirstOrDefaultAsync(project => project.Id == id);
+
+        if (project is null)
+            return false;
+
+        _context.Projects.Remove(project);
+
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 
     public async Task SaveChangesAsync()

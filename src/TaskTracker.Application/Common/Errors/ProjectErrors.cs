@@ -7,13 +7,13 @@ public static class ProjectErrors
         "Project was not found.",
         ErrorType.NotFound);
 
-    public static readonly Error CreationNotAllowed = new(
-        "Project.CreationNotAllowed",
-        "User is not allowed to create a project.",
+    public static readonly Error AccessDenied = new(
+        "Project.AccessDenied",
+        "User is not allowed to manage this project.",
         ErrorType.Authorization);
 
-    public static readonly Error MembersAccessDenied = new(
-        "Project.MembersAccessDenied",
-        "User is not allowed to view project members.",
-        ErrorType.Authorization);
+    public static readonly Error InvalidName = new(
+        "Project.InvalidName",
+        "Project name must contain 1 to 200 characters.",
+        ErrorType.Validation);
 }
