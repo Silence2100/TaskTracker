@@ -10,45 +10,66 @@ namespace TaskTracker.Application.Services;
 
 public class TaskService : ITaskService
 {
-    private readonly ITaskRepository _taskRepository;
     private readonly IProjectRepository _projectRepository;
     private readonly IMemberRepository _memberRepository;
 
-    public TaskService(ITaskRepository taskRepository, IProjectRepository projectRepository, IMemberRepository memberRepository)
+    public TaskService(IProjectRepository projectRepository, IMemberRepository memberRepository)
     {
-        _taskRepository = taskRepository;
         _projectRepository = projectRepository;
         _memberRepository = memberRepository;
     }
 
-    public async Task<List<TaskDto>> GetAllAsync()
+    public async Task<Result<List<TaskDto>>> GetByProjectAsync(Guid projectId, Guid userId)
     {
-        var tasks = await _taskRepository.GetAllAsync();
+        var project = await _projectRepository.GetByIdAsync(projectId);
 
-        return tasks
-            .Select(task => task.ToDto())
+        if (project is null)
+            return Result<List<TaskDto>>.Failure(ProjectErrors.NotFound);
+
+        var isMember = await _memberRepository.IsMemberAsync(projectId, userId);
+
+        if (!isMember)
+            return Result<List<TaskDto>>.Failure(TaskErrors.AccessDenied);
+
+        var tasks = project.Tasks
+            .OrderByDescending(task => task.CreatedAt)
+            .Select(task =>
+            {
+                var taskDto = task.ToDto();
+                taskDto.ProjectName = project.Name;
+                return taskDto;
+            })
             .ToList();
+
+        return Result<List<TaskDto>>.Success(tasks);
     }
 
-    public async Task<List<TaskDto>> GetByProjectMemberIdAsync(Guid memberId)
+    public async Task<Result<TaskDto>> GetByIdAsync(Guid projectId, int taskId, Guid userId)
     {
-        var tasks = await _taskRepository.GetByProjectMemberIdAsync(memberId);
+        var project = await _projectRepository.GetByIdAsync(projectId);
 
-        return tasks
-            .Select(task => task.ToDto())
-            .ToList();
-    }
+        if (project is null)
+            return Result<TaskDto>.Failure(ProjectErrors.NotFound);
 
-    public async Task<TaskDto?> GetByIdAsync(int id)
-    {
-        var task = await _taskRepository.GetByIdAsync(id);
+        var isMember = await _memberRepository.IsMemberAsync(projectId, userId);
 
-        return task?.ToDto();
+        if (!isMember)
+            return Result<TaskDto>.Failure(TaskErrors.AccessDenied);
+
+        var task = project.FindTask(taskId);
+
+        if (task is null)
+            return Result<TaskDto>.Failure(TaskErrors.NotFound);
+
+        var taskDto = task.ToDto();
+        taskDto.ProjectName = project.Name;
+
+        return Result<TaskDto>.Success(taskDto);
     }
 
     public async Task<Result<TaskDto>> CreateAsync(Guid projectId, CreateTaskDto dto, Guid authorId)
     {
-        var project = await _projectRepository.GetByIdAsync(projectId);
+        var project = await _projectRepository.GetForUpdateAsync(projectId);
 
         if (project is null)
             return Result<TaskDto>.Failure(ProjectErrors.NotFound);
@@ -79,54 +100,14 @@ public class TaskService : ITaskService
             CreatedAt = DateTime.UtcNow
         };
 
-        var createdTask = await _taskRepository.CreateAsync(projectId, task);
+        project.AddTask(task);
 
-        return Result<TaskDto>.Success(createdTask.ToDto());
-    }
+        await _projectRepository.SaveChangesAsync();
 
-    public async Task<bool> UpdateAsync(int id, UpdateTaskDto dto)
-    {
-        var task = await _taskRepository.GetByIdAsync(id);
+        var taskDto = task.ToDto();
+        taskDto.ProjectName = project.Name;
 
-        if (task is null)
-            return false;
-
-        task.Title = dto.Title.Trim();
-        task.Description = string.IsNullOrWhiteSpace(dto.Description)
-            ? null
-            : dto.Description.Trim();
-        task.Deadline = NormalizeDateTime(dto.Deadline);
-        task.Status = dto.Status;
-        task.AssignedUserId = dto.AssignedUserId;
-        task.UpdateAt = DateTime.UtcNow;
-
-        await _taskRepository.UpdateAsync(task);
-
-        return true;
-    }
-
-    public async Task<bool> DeleteAsync(int id)
-    {
-        var task = await _taskRepository.GetByIdAsync(id);
-
-        if (task is null)
-            return false;
-
-        await _taskRepository.DeleteAsync(task);
-
-        return true;
-    }
-
-    public async Task<IReadOnlyList<TaskItem>?> GetByProjectAsync(Guid projectId, Guid? userId)
-    {
-        var isMember = await _memberRepository.IsMemberAsync(projectId, userId);
-
-        if (!isMember)
-            return null;
-
-        var tasks = await _taskRepository.GetByProjectIdAsync(projectId);
-
-        return tasks;
+        return Result<TaskDto>.Success(taskDto);
     }
 
     private static DateTime? NormalizeDateTime(DateTime? dateTime)

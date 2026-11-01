@@ -10,6 +10,7 @@ public static class TaskMapper
         return new TaskDto
         {
             Id = task.Id,
+            ProjectId = task.ProjectId,
             Title = task.Title,
             Description = task.Description,
             Deadline = task.Deadline,

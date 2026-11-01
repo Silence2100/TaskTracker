@@ -45,11 +45,23 @@ public class ProjectRepository : IProjectRepository
             .FirstOrDefaultAsync(project => project.Id == id);
     }
 
+    public async Task<Project?> GetForUpdateAsync(Guid id)
+    {
+        return await _context.Projects
+            .Include(project => project.Tasks)
+            .FirstOrDefaultAsync(project => project.Id == id);
+    }
+
     public async Task<Project> CreateAsync(Project project)
     {
         await _context.Projects.AddAsync(project);
         await _context.SaveChangesAsync();
 
         return await GetByIdAsync(project.Id) ?? project;
+    }
+
+    public async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
     }
 }

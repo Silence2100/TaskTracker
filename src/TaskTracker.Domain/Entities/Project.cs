@@ -5,9 +5,23 @@ namespace TaskTracker.Domain.Entities;
 public class Project
 {
     public Guid Id { get; set; }
+
     public string Name { get; set; } = string.Empty;
+
     public List<TaskItem> Tasks { get; set; } = [];
+
     public List<ProjectMember> Members { get; set; } = [];
+
+    public TaskItem? FindTask(int taskId)
+    {
+        return Tasks.FirstOrDefault(task => task.Id == taskId);
+    }
+
+    public void AddTask(TaskItem task)
+    {
+        task.ProjectId = Id;
+        Tasks.Add(task);
+    }
 
     public bool TryGetMembers(Guid? userId, out List<ProjectMember> members)
     {
