@@ -23,6 +23,59 @@ public class Project
         Tasks.Add(task);
     }
 
+    public bool RemoveTask(int taskId)
+    {
+        var task = FindTask(taskId);
+
+        if (task is null)
+            return false;
+
+        return Tasks.Remove(task);
+    }
+
+    public TaskItem? UpdateTaskDetails(int taskId, string title, string? description)
+    {
+        var task = FindTask(taskId);
+
+        if (task is null)
+            return null;
+
+        task.Title = title.Trim();
+        task.Description = string.IsNullOrWhiteSpace(description)
+            ? null
+            : description.Trim();
+
+        task.UpdateAt = DateTime.UtcNow;
+
+        return task;
+    }
+
+    public TaskItem? AssignTaskMember(int taskId, Guid? memberId)
+    {
+        var task = FindTask(taskId);
+
+        if (task is null)
+            return null;
+
+        task.AssignedUserId = memberId;
+        task.UpdateAt = DateTime.UtcNow;
+
+        return task;
+    }
+
+    public TaskItem? ChangeTaskStatus(int taskId, TaskItemStatus status)
+    {
+        var task = FindTask(taskId);
+
+        if (task is null)
+            return null;
+
+        task.Status = status;
+        task.UpdateAt = DateTime.UtcNow;
+
+        return task;
+    }
+
     public bool TryGetMembers(Guid? userId, out List<ProjectMember> members)
     {
         var user = Members.FirstOrDefault(member => member.UserId == userId);

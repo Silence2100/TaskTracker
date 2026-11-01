@@ -51,14 +51,8 @@ public class ProjectsTasksController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<TaskDto>> Create(Guid projectId, CreateTaskDto dto)
+    public async Task<ActionResult<TaskDto>> Create(Guid projectId, [FromBody] CreateTaskDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Title))
-            return BadRequest("Title is required.");
-
-        if (dto.AssignedUserId == Guid.Empty)
-            return BadRequest("AssignedUserId is invalid.");
-
         var userId = User.GetUserId();
 
         if (userId is null)
@@ -77,5 +71,69 @@ public class ProjectsTasksController : ControllerBase
                 taskId = result.Value.Id
             },
             result.Value);
+    }
+
+    [HttpDelete("{taskId:int}")]
+    public async Task<IActionResult> Delete(Guid projectId, int taskId)
+    {
+        var userId = User.GetUserId();
+
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _taskService.DeleteAsync(projectId, taskId, userId.Value);
+
+        if (result.IsFailure)
+            return result.Error.ToActionResult(this);
+
+        return NoContent();
+    }
+
+    [HttpPatch("{taskId:int}")]
+    public async Task<ActionResult<TaskDto>> UpdateDetails(Guid projectId, int taskId, [FromBody] UpdateTaskDto dto)
+    {
+        var userId = User.GetUserId();
+
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _taskService.UpdateDetailsAsync(projectId, taskId, dto, userId.Value);
+
+        if (result.IsFailure)
+            return result.Error.ToActionResult(this);
+
+        return Ok(result.Value);
+    }
+
+    [HttpPatch("{taskId:int}/assigneMember")]
+    public async Task<ActionResult<TaskDto>> AssignMember(Guid projectId, int taskId, [FromBody] AssignTaskMemberDto dto)
+    {
+        var userId = User.GetUserId();
+
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _taskService.AssignMemberAsync(projectId, taskId, dto, userId.Value);
+
+        if (result.IsFailure)
+            return result.Error.ToActionResult(this);
+
+        return Ok(result.Value);
+    }
+
+    [HttpPatch("{taskId:int}/status")]
+    public async Task<ActionResult<TaskDto>> UpdateStatus(Guid projectId, int taskId, [FromBody] UpdateTaskStatusDto dto)
+    {
+        var userId = User.GetUserId();
+
+        if (userId is null)
+            return Unauthorized();
+
+        var result = await _taskService.UpdateStatusAsync(projectId, taskId, dto, userId.Value);
+
+        if (result.IsFailure)
+            return result.Error.ToActionResult(this);
+
+        return Ok(result.Value);
     }
 }

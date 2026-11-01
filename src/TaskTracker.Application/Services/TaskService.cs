@@ -35,9 +35,9 @@ public class TaskService : ITaskService
             .OrderByDescending(task => task.CreatedAt)
             .Select(task =>
             {
-                var taskDto = task.ToDto();
-                taskDto.ProjectName = project.Name;
-                return taskDto;
+                var dto = task.ToDto();
+                dto.ProjectName = project.Name;
+                return dto;
             })
             .ToList();
 
@@ -61,14 +61,20 @@ public class TaskService : ITaskService
         if (task is null)
             return Result<TaskDto>.Failure(TaskErrors.NotFound);
 
-        var taskDto = task.ToDto();
-        taskDto.ProjectName = project.Name;
-
-        return Result<TaskDto>.Success(taskDto);
+        return Result<TaskDto>.Success(ToTaskDto(task, project.Name));
     }
 
     public async Task<Result<TaskDto>> CreateAsync(Guid projectId, CreateTaskDto dto, Guid authorId)
     {
+        if (string.IsNullOrWhiteSpace(dto.Title) || dto.Title.Trim().Length > 200)
+            return Result<TaskDto>.Failure(TaskErrors.InvalidTitle);
+
+        if (dto.Description?.Length > 2000)
+            return Result<TaskDto>.Failure(TaskErrors.InvalidDescription);
+
+        if (dto.AssignedUserId == Guid.Empty)
+            return Result<TaskDto>.Failure(TaskErrors.InvalidAssignee);
+
         var project = await _projectRepository.GetForUpdateAsync(projectId);
 
         if (project is null)
@@ -104,10 +110,124 @@ public class TaskService : ITaskService
 
         await _projectRepository.SaveChangesAsync();
 
-        var taskDto = task.ToDto();
-        taskDto.ProjectName = project.Name;
+        return Result<TaskDto>.Success(ToTaskDto(task, project.Name));
+    }
 
-        return Result<TaskDto>.Success(taskDto);
+    public async Task<Result<bool>> DeleteAsync(Guid projectId, int taskId, Guid userId)
+    {
+        var projectResult = await GetProjectForEditAsync(projectId, userId);
+
+        if (projectResult.IsFailure)
+            return Result<bool>.Failure(projectResult.Error);
+
+        var project = projectResult.Value;
+
+        if (!project.RemoveTask(taskId))
+            return Result<bool>.Failure(TaskErrors.NotFound);
+
+        await _projectRepository.SaveChangesAsync();
+
+        return Result<bool>.Success(true);
+    }
+
+    public async Task<Result<TaskDto>> UpdateDetailsAsync(Guid projectId, int taskId, UpdateTaskDto dto, Guid userId)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Title) || dto.Title.Trim().Length > 200)
+            return Result<TaskDto>.Failure(TaskErrors.InvalidTitle);
+
+        if (dto.Description?.Length > 2000)
+            return Result<TaskDto>.Failure(TaskErrors.InvalidDescription);
+
+        var projectResult = await GetProjectForEditAsync(projectId, userId);
+
+        if (projectResult.IsFailure)
+            return Result<TaskDto>.Failure(projectResult.Error);
+
+        var project = projectResult.Value;
+
+        var task = project.UpdateTaskDetails(taskId, dto.Title, dto.Description);
+
+        if (task is null)
+            return Result<TaskDto>.Failure(TaskErrors.NotFound);
+
+        await _projectRepository.SaveChangesAsync();
+
+        return Result<TaskDto>.Success(ToTaskDto(task, project.Name));
+    }
+
+    public async Task<Result<TaskDto>> AssignMemberAsync(Guid projectId, int taskId, AssignTaskMemberDto dto, Guid userId)
+    {
+        if (dto.AssignedUserId == Guid.Empty)
+            return Result<TaskDto>.Failure(TaskErrors.InvalidAssignee);
+
+        var projectResult = await GetProjectForEditAsync(projectId, userId);
+
+        if (projectResult.IsFailure)
+            return Result<TaskDto>.Failure(projectResult.Error);
+
+        var project = projectResult.Value;
+
+        if (project.FindTask(taskId) is null)
+            return Result<TaskDto>.Failure(TaskErrors.NotFound);
+
+        if (dto.AssignedUserId is not null)
+        {
+            var isMember = await _memberRepository.IsMemberAsync(projectId, dto.AssignedUserId.Value);
+
+            if (!isMember)
+                return Result<TaskDto>.Failure(TaskErrors.AssigneeNotProjectMember);
+        }
+
+        var task = project.AssignTaskMember(taskId, dto.AssignedUserId)!;
+
+        await _projectRepository.SaveChangesAsync();
+
+        return Result<TaskDto>.Success(ToTaskDto(task, project.Name));
+    }
+
+    public async Task<Result<TaskDto>> UpdateStatusAsync(Guid projectId, int taskId, UpdateTaskStatusDto dto, Guid userId)
+    {
+        if (!Enum.IsDefined(typeof(TaskItemStatus), dto.Status))
+            return Result<TaskDto>.Failure(TaskErrors.InvalidStatus);
+
+        var projectResult = await GetProjectForEditAsync(projectId, userId);
+
+        if (projectResult.IsFailure)
+            return Result<TaskDto>.Failure(projectResult.Error);
+
+        var project = projectResult.Value;
+
+        var task = project.ChangeTaskStatus(taskId, dto.Status);
+
+        if (task is null)
+            return Result<TaskDto>.Failure(TaskErrors.NotFound);
+
+        await _projectRepository.SaveChangesAsync();
+
+        return Result<TaskDto>.Success(ToTaskDto(task, project.Name));
+    }
+
+    private async Task<Result<Project>> GetProjectForEditAsync(Guid projectId, Guid userId)
+    {
+        var project = await _projectRepository.GetForUpdateAsync(projectId);
+
+        if (project is null)
+            return Result<Project>.Failure(ProjectErrors.NotFound);
+
+        var isMember = await _memberRepository.IsMemberAsync(projectId, userId);
+
+        if (!isMember)
+            return Result<Project>.Failure(TaskErrors.AccessDenied);
+
+        return Result<Project>.Success(project);
+    }
+
+    private static TaskDto ToTaskDto(TaskItem task, string projectName)
+    {
+        var dto = task.ToDto();
+        dto.ProjectName = projectName;
+
+        return dto;
     }
 
     private static DateTime? NormalizeDateTime(DateTime? dateTime)

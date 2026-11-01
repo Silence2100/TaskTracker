@@ -21,4 +21,24 @@ public static class TaskErrors
         "Task.AssigneeNotProjectMember",
         "Assigned user is not a member of the project.",
         ErrorType.Validation);
+
+    public static readonly Error InvalidTitle = new(
+        "Task.InvalidTitle",
+        "Title must contain 1 to 200 characters.",
+        ErrorType.Validation);
+
+    public static readonly Error InvalidDescription = new(
+        "Task.InvalidDescription",
+        "Description cannot exceed 2000 characters.",
+        ErrorType.Validation);
+
+    public static readonly Error InvalidAssignee = new(
+        "Task.InvalidAssignee",
+        "Assigned user ID cannot be empty.",
+        ErrorType.Validation);
+
+    public static readonly Error InvalidStatus = new(
+        "Task.InvalidStatus",
+        "Invalid task status.",
+        ErrorType.Validation);
 }
