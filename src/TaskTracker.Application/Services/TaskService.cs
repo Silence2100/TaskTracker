@@ -11,12 +11,10 @@ namespace TaskTracker.Application.Services;
 public class TaskService : ITaskService
 {
     private readonly IProjectRepository _projectRepository;
-    private readonly IMemberRepository _memberRepository;
 
-    public TaskService(IProjectRepository projectRepository, IMemberRepository memberRepository)
+    public TaskService(IProjectRepository projectRepository)
     {
         _projectRepository = projectRepository;
-        _memberRepository = memberRepository;
     }
 
     public async Task<Result<List<TaskDto>>> GetByProjectAsync(Guid projectId, Guid userId)
@@ -26,9 +24,7 @@ public class TaskService : ITaskService
         if (project is null)
             return Result<List<TaskDto>>.Failure(ProjectErrors.NotFound);
 
-        var isMember = await _memberRepository.IsMemberAsync(projectId, userId);
-
-        if (!isMember)
+        if (!project.IsMember(userId))
             return Result<List<TaskDto>>.Failure(TaskErrors.AccessDenied);
 
         var tasks = project.Tasks
@@ -37,6 +33,7 @@ public class TaskService : ITaskService
             {
                 var dto = task.ToDto();
                 dto.ProjectName = project.Name;
+
                 return dto;
             })
             .ToList();
@@ -51,9 +48,7 @@ public class TaskService : ITaskService
         if (project is null)
             return Result<TaskDto>.Failure(ProjectErrors.NotFound);
 
-        var isMember = await _memberRepository.IsMemberAsync(projectId, userId);
-
-        if (!isMember)
+        if (!project.IsMember(userId))
             return Result<TaskDto>.Failure(TaskErrors.AccessDenied);
 
         var task = project.FindTask(taskId);
@@ -80,18 +75,11 @@ public class TaskService : ITaskService
         if (project is null)
             return Result<TaskDto>.Failure(ProjectErrors.NotFound);
 
-        var isAuthorMember = await _memberRepository.IsMemberAsync(projectId, authorId);
-
-        if (!isAuthorMember)
+        if (!project.IsMember(authorId))
             return Result<TaskDto>.Failure(TaskErrors.AuthorNotProjectMember);
 
-        if (dto.AssignedUserId is not null)
-        {
-            var isAssigneeMember = await _memberRepository.IsMemberAsync(projectId, dto.AssignedUserId.Value);
-
-            if (!isAssigneeMember)
-                return Result<TaskDto>.Failure(TaskErrors.AssigneeNotProjectMember);
-        }
+        if (dto.AssignedUserId is not null && !project.IsMember(dto.AssignedUserId))
+            return Result<TaskDto>.Failure(TaskErrors.AssigneeNotProjectMember);
 
         var task = new TaskItem
         {
@@ -170,13 +158,8 @@ public class TaskService : ITaskService
         if (project.FindTask(taskId) is null)
             return Result<TaskDto>.Failure(TaskErrors.NotFound);
 
-        if (dto.AssignedUserId is not null)
-        {
-            var isMember = await _memberRepository.IsMemberAsync(projectId, dto.AssignedUserId.Value);
-
-            if (!isMember)
-                return Result<TaskDto>.Failure(TaskErrors.AssigneeNotProjectMember);
-        }
+        if (dto.AssignedUserId is not null && !project.IsMember(dto.AssignedUserId))
+            return Result<TaskDto>.Failure(TaskErrors.AssigneeNotProjectMember);
 
         var task = project.AssignTaskMember(taskId, dto.AssignedUserId)!;
 
@@ -214,9 +197,7 @@ public class TaskService : ITaskService
         if (project is null)
             return Result<Project>.Failure(ProjectErrors.NotFound);
 
-        var isMember = await _memberRepository.IsMemberAsync(projectId, userId);
-
-        if (!isMember)
+        if (!project.IsMember(userId))
             return Result<Project>.Failure(TaskErrors.AccessDenied);
 
         return Result<Project>.Success(project);

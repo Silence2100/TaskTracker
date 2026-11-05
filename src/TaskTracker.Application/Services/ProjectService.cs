@@ -11,13 +11,11 @@ namespace TaskTracker.Application.Services;
 public class ProjectService : IProjectService
 {
     private readonly IProjectRepository _projectRepository;
-    private readonly IMemberRepository _memberRepository;
     private readonly IUserRepository _userRepository;
 
-    public ProjectService(IProjectRepository projectRepository, IMemberRepository memberRepository, IUserRepository userRepository)
+    public ProjectService(IProjectRepository projectRepository, IUserRepository userRepository)
     {
         _projectRepository = projectRepository;
-        _memberRepository = memberRepository;
         _userRepository = userRepository;
     }
 
@@ -50,23 +48,17 @@ public class ProjectService : IProjectService
         var project = new Project
         {
             Id = Guid.NewGuid(),
-            Name = dto.Name.Trim(),
-            Members =
-            [
-                new ProjectMember
-                {
-                    UserId = userId,
-                    Role = ProjectRole.Owner
-                }
-            ]
+            Name = dto.Name.Trim()
         };
+
+        project.AddMember(userId, ProjectRole.Owner);
 
         var created = await _projectRepository.CreateAsync(project);
 
         return Result<ProjectDto>.Success(created.ToDto());
     }
 
-    public async Task<Result<bool>> DeleteAsync(Guid projectId,Guid userId)
+    public async Task<Result<bool>> DeleteAsync(Guid projectId, Guid userId)
     {
         var projectResult = await GetOwnedProjectAsync(projectId, userId);
 
@@ -88,11 +80,11 @@ public class ProjectService : IProjectService
         if (projectResult.IsFailure)
             return Result<List<ProjectMemberDto>>.Failure(projectResult.Error);
 
-        var members = await _memberRepository.GetByProjectIdAsync(projectId);
+        var project = projectResult.Value;
 
         var result = new List<ProjectMemberDto>();
 
-        foreach (var member in members)
+        foreach (var member in project.Members)
             result.Add(await ToMemberDtoAsync(member));
 
         return Result<List<ProjectMemberDto>>.Success(result);
@@ -103,7 +95,7 @@ public class ProjectService : IProjectService
         if (userId == Guid.Empty)
             return Result<ProjectMemberDto>.Failure(MemberErrors.InvalidUserId);
 
-        var projectResult = await GetOwnedProjectAsync(projectId, currentUserId);
+        var projectResult = await GetOwnedProjectAsync(projectId, currentUserId, forUpdate: true);
 
         if (projectResult.IsFailure)
             return Result<ProjectMemberDto>.Failure(projectResult.Error);
@@ -113,53 +105,42 @@ public class ProjectService : IProjectService
         if (user is null)
             return Result<ProjectMemberDto>.Failure(MemberErrors.UserNotFound);
 
-        var existingMember = await _memberRepository.GetAsync(projectId, userId);
+        var project = projectResult.Value;
 
-        if (existingMember is not null)
+        var member = project.AddMember(userId, ProjectRole.Member);
+
+        if (member is null)
             return Result<ProjectMemberDto>.Failure(MemberErrors.AlreadyExists);
 
-        var member = new ProjectMember
-        {
-            ProjectId = projectId,
-            UserId = userId,
-            Role = ProjectRole.Member
-        };
-
-        await _memberRepository.AddAsync(member);
+        await _projectRepository.SaveChangesAsync();
 
         return Result<ProjectMemberDto>.Success(await ToMemberDtoAsync(member));
     }
 
-    public async Task<Result<bool>> RemoveMemberAsync(Guid projectId, Guid userId, Guid currentUserId)
+    public async Task<Result<bool>> RemoveMemberAsync(Guid projectId,Guid userId, Guid currentUserId)
     {
         if (userId == Guid.Empty)
             return Result<bool>.Failure(MemberErrors.InvalidUserId);
 
-        var projectResult = await GetOwnedProjectAsync(projectId, currentUserId, trackTasks: true);
+        var projectResult = await GetOwnedProjectAsync(projectId, currentUserId, forUpdate: true);
 
         if (projectResult.IsFailure)
             return Result<bool>.Failure(projectResult.Error);
 
         var project = projectResult.Value;
 
-        var member = await _memberRepository.GetAsync(projectId, userId);
+        var member = project.FindMember(userId);
 
         if (member is null)
             return Result<bool>.Failure(MemberErrors.NotFound);
 
-        if (member.Role == ProjectRole.Owner)
-        {
-            var members = await _memberRepository.GetByProjectIdAsync(projectId);
+        if (project.IsLastOwner(userId))
+            return Result<bool>.Failure(MemberErrors.LastOwner);
 
-            var ownersCount = members.Count(item => item.Role == ProjectRole.Owner);
+        if (!project.RemoveMember(userId))
+            return Result<bool>.Failure(MemberErrors.NotFound);
 
-            if (ownersCount <= 1)
-                return Result<bool>.Failure(MemberErrors.LastOwner);
-        }
-
-        project.UnassignTasksFromUser(userId);
-
-        await _memberRepository.DeleteAsync(member);
+        await _projectRepository.SaveChangesAsync();
 
         return Result<bool>.Success(true);
     }
@@ -172,43 +153,41 @@ public class ProjectService : IProjectService
         if (!Enum.IsDefined(typeof(ProjectRole), dto.Role))
             return Result<ProjectMemberDto>.Failure(MemberErrors.InvalidRole);
 
-        var projectResult = await GetOwnedProjectAsync(projectId, currentUserId);
+        var projectResult = await GetOwnedProjectAsync(projectId, currentUserId, forUpdate: true);
 
         if (projectResult.IsFailure)
             return Result<ProjectMemberDto>.Failure(projectResult.Error);
 
-        var member = await _memberRepository.GetAsync(projectId, dto.UserId);
+        var project = projectResult.Value;
+
+        var member = project.FindMember(dto.UserId);
 
         if (member is null)
             return Result<ProjectMemberDto>.Failure(MemberErrors.NotFound);
 
-        if (member.Role == ProjectRole.Owner && dto.Role != ProjectRole.Owner)
-        {
-            var members = await _memberRepository.GetByProjectIdAsync(projectId);
+        if (project.IsLastOwner(dto.UserId) && dto.Role != ProjectRole.Owner)
+            return Result<ProjectMemberDto>.Failure(MemberErrors.LastOwner);
 
-            var ownersCount = members.Count(item => item.Role == ProjectRole.Owner);
+        var updatedMember = project.UpdateMemberRole(dto.UserId, dto.Role);
 
-            if (ownersCount <= 1)
-                return Result<ProjectMemberDto>.Failure(MemberErrors.LastOwner);
-        }
+        if (updatedMember is null)
+            return Result<ProjectMemberDto>.Failure(MemberErrors.LastOwner);
 
-        member.Role = dto.Role;
+        await _projectRepository.SaveChangesAsync();
 
-        await _memberRepository.UpdateAsync(member);
-
-        return Result<ProjectMemberDto>.Success(await ToMemberDtoAsync(member));
+        return Result<ProjectMemberDto>.Success(await ToMemberDtoAsync(updatedMember));
     }
 
-    private async Task<Result<Project>> GetOwnedProjectAsync(Guid projectId, Guid currentUserId, bool trackTasks = false)
+    private async Task<Result<Project>> GetOwnedProjectAsync(Guid projectId, Guid currentUserId, bool forUpdate = false)
     {
-        var project = trackTasks
+        var project = forUpdate
             ? await _projectRepository.GetForUpdateAsync(projectId)
             : await _projectRepository.GetByIdAsync(projectId);
 
         if (project is null)
             return Result<Project>.Failure(ProjectErrors.NotFound);
 
-        var role = await _memberRepository.GetRoleAsync(projectId, currentUserId);
+        var role = project.GetMemberRole(currentUserId);
 
         if (role != ProjectRole.Owner)
             return Result<Project>.Failure(ProjectErrors.AccessDenied);

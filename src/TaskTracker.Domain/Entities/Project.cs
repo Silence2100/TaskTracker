@@ -12,6 +12,81 @@ public class Project
 
     public List<ProjectMember> Members { get; set; } = [];
 
+    public ProjectMember? FindMember(Guid userId)
+    {
+        return Members.FirstOrDefault(member => member.UserId == userId);
+    }
+
+    public bool IsMember(Guid? userId)
+    {
+        if (userId is null)
+            return false;
+
+        return FindMember(userId.Value) is not null;
+    }
+
+    public ProjectRole? GetMemberRole(Guid userId)
+    {
+        return FindMember(userId)?.Role;
+    }
+
+    public bool IsLastOwner(Guid userId)
+    {
+        var member = FindMember(userId);
+
+        if (member is null || member.Role != ProjectRole.Owner)
+            return false;
+
+        return Members.Count(item => item.Role == ProjectRole.Owner) == 1;
+    }
+
+    public ProjectMember? AddMember(Guid userId, ProjectRole role)
+    {
+        if (FindMember(userId) is not null)
+            return null;
+
+        var member = new ProjectMember
+        {
+            ProjectId = Id,
+            UserId = userId,
+            Role = role
+        };
+
+        Members.Add(member);
+
+        return member;
+    }
+
+    public bool RemoveMember(Guid userId)
+    {
+        var member = FindMember(userId);
+
+        if (member is null || IsLastOwner(userId))
+            return false;
+
+        if (!Members.Remove(member))
+            return false;
+
+        UnassignTasksFromUser(userId);
+
+        return true;
+    }
+
+    public ProjectMember? UpdateMemberRole(Guid userId, ProjectRole role)
+    {
+        var member = FindMember(userId);
+
+        if (member is null)
+            return null;
+
+        if (IsLastOwner(userId) && role != ProjectRole.Owner)
+            return null;
+
+        member.Role = role;
+
+        return member;
+    }
+
     public TaskItem? FindTask(int taskId)
     {
         return Tasks.FirstOrDefault(task => task.Id == taskId);

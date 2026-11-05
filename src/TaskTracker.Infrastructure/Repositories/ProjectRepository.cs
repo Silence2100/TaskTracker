@@ -37,6 +37,7 @@ public class ProjectRepository : IProjectRepository
     {
         return await _context.Projects
             .Include(project => project.Tasks)
+            .Include(project => project.Members)
             .FirstOrDefaultAsync(project => project.Id == id);
     }
 
@@ -50,7 +51,8 @@ public class ProjectRepository : IProjectRepository
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var project = await _context.Projects.FirstOrDefaultAsync(project => project.Id == id);
+        var project = await _context.Projects
+            .FirstOrDefaultAsync(project => project.Id == id);
 
         if (project is null)
             return false;
