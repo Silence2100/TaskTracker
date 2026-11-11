@@ -4,13 +4,14 @@ namespace TaskTracker.Domain.Entities;
 
 public class Project
 {
+    private readonly List<TaskItem> _tasks = [];
     private readonly List<ProjectMember> _members = [];
 
     public Guid Id { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
-    public List<TaskItem> Tasks { get; set; } = [];
+    public IReadOnlyCollection<TaskItem> Tasks => _tasks.AsReadOnly();
 
     public IReadOnlyCollection<ProjectMember> Members => _members.AsReadOnly();
 
@@ -91,13 +92,13 @@ public class Project
 
     public TaskItem? FindTask(int taskId)
     {
-        return Tasks.FirstOrDefault(task => task.Id == taskId);
+        return _tasks.FirstOrDefault(task => task.Id == taskId);
     }
 
     public void AddTask(TaskItem task)
     {
         task.ProjectId = Id;
-        Tasks.Add(task);
+        _tasks.Add(task);
     }
 
     public bool RemoveTask(int taskId)
@@ -107,7 +108,7 @@ public class Project
         if (task is null)
             return false;
 
-        return Tasks.Remove(task);
+        return _tasks.Remove(task);
     }
 
     public TaskItem? UpdateTaskDetails(int taskId, string title, string? description)
@@ -157,7 +158,7 @@ public class Project
     {
         var now = DateTime.UtcNow;
 
-        foreach (var task in Tasks)
+        foreach (var task in _tasks)
         {
             if (task.AssignedUserId != userId)
                 continue;
