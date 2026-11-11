@@ -28,20 +28,17 @@ public sealed record Login
 
         if (normalizedLogin.Length < MinLength)
         {
-            throw new DomainException(
-                $"Login cannot be shorter than {MinLength} characters.");
+            throw new DomainException($"Login cannot be shorter than {MinLength} characters.");
         }
 
         if (normalizedLogin.Length > MaxLength)
         {
-            throw new DomainException(
-                $"Login cannot be longer than {MaxLength} characters.");
+            throw new DomainException($"Login cannot be longer than {MaxLength} characters.");
         }
 
         if (!LoginRegex.IsMatch(normalizedLogin))
         {
-            throw new DomainException(
-                "Login can contain only Latin letters, numbers, dots, underscores and hyphens.");
+            throw new DomainException("Login can contain only Latin letters, numbers, dots, underscores and hyphens.");
         }
 
         return new Login(normalizedLogin);

@@ -4,17 +4,19 @@ namespace TaskTracker.Domain.Entities;
 
 public class Project
 {
+    private readonly List<ProjectMember> _members = [];
+
     public Guid Id { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
     public List<TaskItem> Tasks { get; set; } = [];
 
-    public List<ProjectMember> Members { get; set; } = [];
+    public IReadOnlyCollection<ProjectMember> Members => _members.AsReadOnly();
 
     public ProjectMember? FindMember(Guid userId)
     {
-        return Members.FirstOrDefault(member => member.UserId == userId);
+        return _members.FirstOrDefault(member => member.UserId == userId);
     }
 
     public bool IsMember(Guid? userId)
@@ -37,7 +39,7 @@ public class Project
         if (member is null || member.Role != ProjectRole.Owner)
             return false;
 
-        return Members.Count(item => item.Role == ProjectRole.Owner) == 1;
+        return _members.Count(item => item.Role == ProjectRole.Owner) == 1;
     }
 
     public ProjectMember? AddMember(Guid userId, ProjectRole role)
@@ -52,7 +54,7 @@ public class Project
             Role = role
         };
 
-        Members.Add(member);
+        _members.Add(member);
 
         return member;
     }
@@ -64,7 +66,7 @@ public class Project
         if (member is null || IsLastOwner(userId))
             return false;
 
-        if (!Members.Remove(member))
+        if (!_members.Remove(member))
             return false;
 
         UnassignTasksFromUser(userId);
