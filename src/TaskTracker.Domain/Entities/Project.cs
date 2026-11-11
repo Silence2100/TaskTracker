@@ -62,12 +62,7 @@ public class Project
         if (FindMember(userId) is not null)
             return null;
 
-        var member = new ProjectMember
-        {
-            ProjectId = Id,
-            UserId = userId,
-            Role = role
-        };
+        var member = new ProjectMember(Id, userId, role);
 
         _members.Add(member);
 
@@ -99,7 +94,7 @@ public class Project
         if (IsLastOwner(userId) && role != ProjectRole.Owner)
             return null;
 
-        member.Role = role;
+        member.ChangeRole(role);
 
         return member;
     }
