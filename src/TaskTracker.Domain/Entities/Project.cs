@@ -9,11 +9,25 @@ public class Project
 
     public Guid Id { get; set; }
 
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; private set; }
 
     public IReadOnlyCollection<TaskItem> Tasks => _tasks.AsReadOnly();
 
     public IReadOnlyCollection<ProjectMember> Members => _members.AsReadOnly();
+
+    private Project()
+    {
+        Name = string.Empty;
+    }
+
+    public Project(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.Trim().Length > 200)
+            throw new ArgumentException("Invalid project name.", nameof(name));
+
+        Id = Guid.NewGuid();
+        Name = name.Trim();
+    }
 
     public ProjectMember? FindMember(Guid userId)
     {

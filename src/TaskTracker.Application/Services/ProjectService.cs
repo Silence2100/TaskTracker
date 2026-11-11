@@ -45,11 +45,7 @@ public class ProjectService : IProjectService
         if (user is null)
             return Result<ProjectDto>.Failure(ProjectErrors.AccessDenied);
 
-        var project = new Project
-        {
-            Id = Guid.NewGuid(),
-            Name = dto.Name.Trim()
-        };
+        var project = new Project(dto.Name);
 
         project.AddMember(userId, ProjectRole.Owner);
 
@@ -114,10 +110,11 @@ public class ProjectService : IProjectService
 
         await _projectRepository.SaveChangesAsync();
 
-        return Result<ProjectMemberDto>.Success(await ToMemberDtoAsync(member));
+        return Result<ProjectMemberDto>.Success(
+            await ToMemberDtoAsync(member));
     }
 
-    public async Task<Result<bool>> RemoveMemberAsync(Guid projectId,Guid userId, Guid currentUserId)
+    public async Task<Result<bool>> RemoveMemberAsync(Guid projectId, Guid userId, Guid currentUserId)
     {
         if (userId == Guid.Empty)
             return Result<bool>.Failure(MemberErrors.InvalidUserId);
@@ -175,7 +172,8 @@ public class ProjectService : IProjectService
 
         await _projectRepository.SaveChangesAsync();
 
-        return Result<ProjectMemberDto>.Success(await ToMemberDtoAsync(updatedMember));
+        return Result<ProjectMemberDto>.Success(
+            await ToMemberDtoAsync(updatedMember));
     }
 
     private async Task<Result<Project>> GetOwnedProjectAsync(Guid projectId, Guid currentUserId, bool forUpdate = false)
