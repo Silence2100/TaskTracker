@@ -10,10 +10,18 @@ public class ProjectMember
 
     public ProjectRole Role { get; private set; }
 
-    private ProjectMember() {}
+    private ProjectMember() { }
 
     internal ProjectMember(Guid projectId, Guid userId, ProjectRole role)
     {
+        if (projectId == Guid.Empty)
+            throw new ArgumentException("Project ID cannot be empty.", nameof(projectId));
+
+        if (userId == Guid.Empty)
+            throw new ArgumentException("User ID cannot be empty.", nameof(userId));
+
+        ValidateRole(role);
+
         ProjectId = projectId;
         UserId = userId;
         Role = role;
@@ -21,6 +29,14 @@ public class ProjectMember
 
     internal void ChangeRole(ProjectRole role)
     {
+        ValidateRole(role);
+
         Role = role;
+    }
+
+    private static void ValidateRole(ProjectRole role)
+    {
+        if (!Enum.IsDefined(role))
+            throw new ArgumentOutOfRangeException(nameof(role), role, "Invalid project role.");
     }
 }
