@@ -106,7 +106,10 @@ public class Project
 
     public void AddTask(TaskItem task)
     {
+        ValidateAssignee(task.AssignedUserId);
+
         task.ProjectId = Id;
+
         _tasks.Add(task);
     }
 
@@ -128,9 +131,8 @@ public class Project
             return null;
 
         task.Title = title.Trim();
-        task.Description = string.IsNullOrWhiteSpace(description)
-            ? null
-            : description.Trim();
+
+        task.Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
 
         task.UpdateAt = DateTime.UtcNow;
 
@@ -143,6 +145,8 @@ public class Project
 
         if (task is null)
             return null;
+
+        ValidateAssignee(memberId);
 
         task.AssignedUserId = memberId;
         task.UpdateAt = DateTime.UtcNow;
@@ -175,5 +179,11 @@ public class Project
             task.AssignedUserId = null;
             task.UpdateAt = now;
         }
+    }
+
+    private void ValidateAssignee(Guid? assignedUserId)
+    {
+        if (assignedUserId is not null && !IsMember(assignedUserId))
+            throw new ArgumentException("Task assignee must be a project member.", nameof(assignedUserId));
     }
 }
