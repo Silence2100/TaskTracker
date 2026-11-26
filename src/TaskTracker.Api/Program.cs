@@ -4,6 +4,7 @@ using Microsoft.OpenApi;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using TaskTracker.Api.Authorization;
+using TaskTracker.Api.ExceptionHandlers;
 using TaskTracker.Application;
 using TaskTracker.Application.Common;
 using TaskTracker.Domain.Enums;
@@ -14,6 +15,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddLogging();
 builder.Services.AddControllers();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -79,6 +84,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

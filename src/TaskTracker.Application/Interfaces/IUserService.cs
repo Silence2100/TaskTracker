@@ -6,9 +6,14 @@ namespace TaskTracker.Application.Interfaces;
 public interface IUserService
 {
     Task<List<UserDto>> GetAllAsync();
-    Task<UserDto?> GetByIdAsync(Guid id);
-    Task<UserDto?> RegisterAsync(RegisterUserDto dto);
-    Task<AuthResponseDto?> LoginAsync(LoginUserDto dto);
-    Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto dto);
-    Task<bool> DeleteAsync(Guid id);
+
+    Task<UserDto> GetByIdAsync(Guid id);
+
+    Task<UserDto> RegisterAsync(RegisterUserDto dto);
+
+    Task<AuthResponseDto> LoginAsync(LoginUserDto dto);
+
+    Task<UserDto> UpdateAsync(Guid id, UpdateUserDto dto);
+
+    Task DeleteAsync(Guid id);
 }

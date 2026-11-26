@@ -10,7 +10,7 @@ namespace TaskTracker.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UsersController: ControllerBase
+public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
     private readonly ILogger<UsersController> _logger;
@@ -36,9 +36,6 @@ public class UsersController: ControllerBase
     {
         var user = await _userService.GetByIdAsync(id);
 
-        if (user is null)
-            return NotFound();
-
         _logger.LogInformation("Retrieved user with ID {UserId}", id);
 
         return Ok(user);
@@ -48,10 +45,7 @@ public class UsersController: ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> RegisterAsync(RegisterUserDto dto)
     {
-        var user = await _userService.RegisterAsync(dto);
-
-        if (user is null)
-            return Conflict();
+        await _userService.RegisterAsync(dto);
 
         return Created();
     }
@@ -62,9 +56,6 @@ public class UsersController: ControllerBase
     {
         var result = await _userService.LoginAsync(dto);
 
-        if (result is null)
-            return Unauthorized();
-
         return Ok(result);
     }
 
@@ -72,10 +63,7 @@ public class UsersController: ControllerBase
     [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> UpdateAsync(Guid id, UpdateUserDto dto)
     {
-        var user = await _userService.UpdateAsync(id, dto);
-
-        if (user is null)
-            return NotFound();
+        await _userService.UpdateAsync(id, dto);
 
         return Ok();
     }
@@ -84,10 +72,7 @@ public class UsersController: ControllerBase
     [Authorize(Policy = Policies.Admin)]
     public async Task<IActionResult> DeleteAsync(Guid id)
     {
-        var user = await _userService.DeleteAsync(id);
-
-        if (user == false)
-            return NotFound();
+        await _userService.DeleteAsync(id);
 
         return Ok();
     }

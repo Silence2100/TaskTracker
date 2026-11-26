@@ -1,4 +1,5 @@
-﻿using TaskTracker.Application.DTOs.Auth;
+﻿using TaskTracker.Application.Common.Exceptions;
+using TaskTracker.Application.DTOs.Auth;
 using TaskTracker.Application.DTOs.Users;
 using TaskTracker.Application.Interfaces;
 using TaskTracker.Application.Mappings;
@@ -29,24 +30,23 @@ public class UserService : IUserService
             .ToList();
     }
 
-    public async Task<UserDto?> GetByIdAsync(Guid id)
+    public async Task<UserDto> GetByIdAsync(Guid id)
     {
-        var user = await _userRepository.ReadByIdAsync(id);
+        var user = await _userRepository.ReadByIdAsync(id) ?? throw new UserNotFoundException(id);
 
-        if (user is null)
-            return null;
-
-        return user
-            .ToDto();
+        return user.ToDto();
     }
 
-    public async Task<UserDto?> RegisterAsync(RegisterUserDto dto)
+    public async Task<UserDto> RegisterAsync(RegisterUserDto dto)
     {
         var login = Login.Create(dto.Login);
         var email = Email.Create(dto.Email);
 
-        if (await _userRepository.HasLoginAsync(login) || await _userRepository.HasEmailAsync(email))
-            return null;
+        if (await _userRepository.HasLoginAsync(login))
+            throw new LoginAlreadyExistsException();
+
+        if (await _userRepository.HasEmailAsync(email))
+            throw new EmailAlreadyExistsException();
 
         var passwordHash = _passwordHasher.Hash(dto.Password);
 
@@ -57,17 +57,14 @@ public class UserService : IUserService
         return user.ToDto();
     }
 
-    public async Task<AuthResponseDto?> LoginAsync(LoginUserDto dto)
+    public async Task<AuthResponseDto> LoginAsync(LoginUserDto dto)
     {
         var login = Login.Create(dto.Login);
 
-        var user = await _userRepository.GetByLoginAsync(login);
-
-        if (user is null)
-            return null;
+        var user = await _userRepository.GetByLoginAsync(login) ?? throw new InvalidLoginException();
 
         if (!_passwordHasher.Verify(user.PasswordHash, dto.Password))
-            return null;
+            throw new InvalidLoginException();
 
         var accessToken = _jwtTokenGenerator.Generate(user);
 
@@ -78,12 +75,9 @@ public class UserService : IUserService
         };
     }
 
-    public async Task<UserDto?> UpdateAsync(Guid id, UpdateUserDto dto)
+    public async Task<UserDto> UpdateAsync(Guid id, UpdateUserDto dto)
     {
-        var user = await _userRepository.GetByIdAsync(id);
-
-        if (user is null)
-            return null;
+        var user = await _userRepository.GetByIdAsync(id) ?? throw new UserNotFoundException(id);
 
         if (dto.Name is not null)
             user.UpdateName(dto.Name);
@@ -99,8 +93,11 @@ public class UserService : IUserService
         return user.ToDto();
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id)
     {
-        return await _userRepository.DeleteAsync(id);
+        var deleted = await _userRepository.DeleteAsync(id);
+
+        if (!deleted)
+            throw new UserNotFoundException(id);
     }
 }
